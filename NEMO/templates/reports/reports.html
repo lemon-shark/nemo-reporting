@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extrahead %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<link rel="stylesheet" type="text/css" href="{% static "NEMO_4dlabs/style.css" %}"/>
+{% endblock %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+	<h1>Reports</h1>
+	<h4>Use this form to select report type.</h4>
+	<form id="report_select_form" method="post" class="form-horizontal" style="margin-top: 25px">
+		{% csrf_token %}
+		<div class="col-sm-8" style="padding-left: 0">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="report_type">Select report type</label>
+					<div class="col-sm-10 no-padding-sides">
+						<select id="report_type" name="report_type" class="form-control">
+							<option value="">Select type</option>
+							<option value="tool">Tool Usage</option>
+							<option value="facility">Facility Usage</option>
+							<option value="active_user">Active Users</option>
+							<option value="cumulative_user">Cumulative Users</option>
+							<option value="invoice">Invoices</option>
+							<option value="group">Group Breakdown</option>
+						</select>
+					</div>
+					<div class="col-sm-2 text-center">
+						<button id="id-submit" type="submit" class="btn btn-success">Confirm</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<script>
+		$("#id-submit").click(function() {
+			 if ($("#report_type").val() == 'tool') {
+				 $("#report_select_form").attr("action","usage-events/");
+			 } else if ($("#report_type").val() == 'active_user') {
+			 	 $("#report_select_form").attr("action","active-users/");
+			 } else if ($("#report_type").val() == 'cumulative_user') {
+			 	 $("#report_select_form").attr("action","cumulative-users/");
+			 }
+			document.getElementById('report_select_form').submit();
+		});
+	</script>
+{% endblock %}

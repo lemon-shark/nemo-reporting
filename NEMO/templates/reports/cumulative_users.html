@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extrahead %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<link rel="stylesheet" type="text/css" href="{% static "NEMO_4dlabs/style.css" %}"/>
+{% endblock %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1>Cumulative User Report</h1>
+<form id="date-form" method="POST" action="">
+	{% csrf_token %}
+	<div class="control-label col-sm-2">
+		<label for="start_time">Select from</label>
+	</div>
+	<div class="col-sm-3 col-md-3 col-lg-2">
+		<input type="text" id="start_time" name="start_time" class="form-control text-center" placeholder="Choose a date" required>
+	</div>
+	<div class="control-label col-sm-1 col-sm-1 col-lg-1" style="text-align: center">
+		<label for="end_time">to</label>
+	</div>
+	<div class="col-sm-3 col-md-3 col-lg-2">
+		<input type="text" id="end_time" name="end_time" class="form-control text-center" placeholder="Choose a date" required>
+	</div>
+<!--    <div class="col-sm-6">-->
+<!--		<div class="form-group">-->
+<!--			<label for="start_time">Date joined start time</label>-->
+<!--			<div class="col-sm-10 no-padding-sides">-->
+<!--				<input id="start_time" name="start_time" class="form-control text-center" type="text" placeholder="Select usage start time" required>-->
+<!--			</div>-->
+<!--		</div>-->
+<!--	</div>-->
+<!--	<div class="col-sm-5 col-sm-offset-1">-->
+<!--		<div class="form-group">-->
+<!--			<label for="end_time">Date joined end time</label>-->
+<!--			<div class="col-sm-12 no-padding-sides">-->
+<!--				<input id="end_time" name="end_time" class="form-control text-center" type="text" placeholder="Select usage end time" required>-->
+<!--			</div>-->
+<!--		</div>-->
+<!--	</div>-->
+	<div class="col-md-3">
+		<button id="date-search" type="submit" class="btn btn-success">Search</button>
+	</div>
+<!--    <div class="col-sm-2 text-center" style="margin-top: 3%">-->
+<!--		<button id="date-search" type="submit" class="btn btn-success">Search</button>-->
+<!--	</div>-->
+</form>
+<div id="export_button" class="col-sm-2 text-center" style="margin-top: 3%;display: none">
+		<button type="submit" class="btn btn-success">Export</button>
+</div>
+<div style="height: 5px; border-top: 1px dotted #eee"></div>
+<div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
+	{% if start != '0' %}
+		{% if context %}
+		<table border="1" class="dataframe" style="margin-top: 3%">
+		  <thead>
+			<tr style="text-align: right;">
+				<th>first_name</th>
+				<th>last_name</th>
+				<th>type</th>
+				<th>date joined</th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr>
+				{% for key, value in context.items %}
+				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+				{% endfor %}
+			</tr>
+		  </tbody>
+		</table>
+		{% else %}
+			No access records exist between your input time.
+		{% endif %}
+	{% endif %}
+  </div>
+<script>
+	function on_load()
+		{
+			var timepicker_properties =
+			{
+				format: 'MM/DD/YYYY'
+			};
+			$('#start_time').datetimepicker(timepicker_properties);
+			$('#end_time').datetimepicker(timepicker_properties);
+		}
+		$(on_load);
+
+	$("#date-search").click(function() {
+		$("#data-form").attr("action", "active-users/");
+	});
+</script>
+{% endblock %}
