@@ -35,7 +35,7 @@
 		{% if context %}
 		<table border="1" class="dataframe" style="margin-top: 3%">
 		  <thead>
-			<tr style="text-align: right;">
+			<tr>
 				<th>&nbspfirst_name&nbsp</th>
 				<th>&nbsplast_name&nbsp</th>
 				<th>&nbsptype&nbsp</th>
@@ -45,7 +45,8 @@
 		  <tbody>
 			<tr>
 				{% for key, value in context.items %}
-				 <td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>
+					<td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>
+<!--				 <td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>-->
 				{% endfor %}
 			</tr>
 		  </tbody>

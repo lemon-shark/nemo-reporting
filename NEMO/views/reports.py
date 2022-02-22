@@ -1,3 +1,5 @@
+import collections
+
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
@@ -36,7 +38,7 @@ def date_parameters_dictionary(request):
 
 def usage_events(request):
     start_date, end_date = date_parameters_dictionary(request)
-    page = request.GET.get('page', 1)
+    # page = request.GET.get('page', 1)
     if start_date != '0' or end_date != '0':
         tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date, end__lte=end_date)
         d = {}
@@ -78,10 +80,12 @@ def active_users(request):
         keys_values = d.items()
         new_d = {str(key): str(value) for key, value in keys_values}
         if len(new_d) != 0:
-            total_d = {'Total': str(len(new_d))}
-            res = {**total_d, **new_d}
-            print(res)
-            return render(request, "reports/active_users.html", {'context': res, 'start': start_date, 'end': end_date})
+            # total_d = {'Total': str(len(new_d))}
+            # res = {**total_d, **new_d}
+            # print(res)
+            total = len(new_d)
+            return render(request, "reports/active_users.html", {'context': new_d, 'total': total, 'start': start_date,
+                                                                 'end': end_date})
         else:
             return render(request, "reports/active_users.html", {'start': start_date, 'end': end_date})
     else:
@@ -90,15 +94,24 @@ def active_users(request):
 
 def cumulative_users(request):
     start_date, end_date = date_parameters_dictionary(request)
+    list_of_data = [[] for i in range(4)]
     if start_date != '0' or end_date != '0':
-        # user_data = User.objects.all()
-        user_data = User.objects.filter(date_joined__gt=start_date, date_joined__lte=end_date)
-        d = {}
+        # print(start_date)
+        # print(end_date)
+        # print(User.objects.all())
+        user_data = User.objects.filter(date_joined__gte=start_date, date_joined__lte=end_date)
+        print(user_data)
+        d = collections.defaultdict(list)
         for user in user_data:
-            d['first_name'] = user.first_name
-            d['last_name'] = user.last_name
-            d['type'] = user.type
-            d['date_joined'] = str(user.date_joined)[0:10]
+            d['first_name'].append(user.first_name)
+            list_of_data[0].append(user.first_name)
+            d['last_name'].append(user.last_name)
+            list_of_data[1].append(user.last_name)
+            d['type'].append(user.type)
+            list_of_data[2].append(user.type)
+            print(user.date_joined)
+            d['date_joined'].append(str(user.date_joined)[0:10])
+            list_of_data[3].append(str(user.date_joined)[0:10])
         keys_values = d.items()
         new_d = {str(key): str(value) for key, value in keys_values}
         print(new_d)

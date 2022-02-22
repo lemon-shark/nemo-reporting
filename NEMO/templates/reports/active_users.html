@@ -34,10 +34,11 @@
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
 	{% if start != '0' %}
 		{% if context %}
+		<p>Active users from {{start}} to {{end}}</p>
 		<table border="1" class="dataframe" style="margin-top: 3%">
 		  <thead>
 			<tr style="text-align: right;">
-			  <th>User</th>
+			  <th>User: {{total}} in total</th>
 			</tr>
 		  </thead>
 		  <tbody>
