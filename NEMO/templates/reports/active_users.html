@@ -22,28 +22,9 @@
 	<div class="col-sm-3 col-md-3 col-lg-2">
 		<input type="text" id="end_time" name="end_time" class="form-control text-center" placeholder="Choose a date" required>
 	</div>
-<!--    <div class="col-sm-6">-->
-<!--		<div class="form-group">-->
-<!--			<label for="start_time">Usage start time</label>-->
-<!--			<div class="col-sm-10 no-padding-sides">-->
-<!--				<input id="start_time" name="start_time" class="form-control text-center" type="text" placeholder="Select usage start time" required>-->
-<!--			</div>-->
-<!--		</div>-->
-<!--	</div>-->
-<!--	<div class="col-sm-5 col-sm-offset-1">-->
-<!--		<div class="form-group">-->
-<!--			<label for="end_time">Usage end time</label>-->
-<!--			<div class="col-sm-12 no-padding-sides">-->
-<!--				<input id="end_time" name="end_time" class="form-control text-center" type="text" placeholder="Select usage end time" required>-->
-<!--			</div>-->
-<!--		</div>-->
-<!--	</div>-->
 	<div class="col-md-3">
 		<button id="date-search" type="submit" class="btn btn-success">Search</button>
 	</div>
-<!--    <div class="col-sm-2 text-center" style="margin-top: 3%">-->
-<!--		<button id="date-search" type="submit" class="btn btn-success">Search</button>-->
-<!--	</div>-->
 </form>
 <div id="export_button" class="col-sm-2 text-center" style="margin-top: 3%;display: none">
 		<button type="submit" class="btn btn-success">Export</button>
@@ -62,7 +43,7 @@
 		  <tbody>
 		  {% for key, value in context.items %}
 			<tr>
-				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+				 <td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>
 			</tr>
 		  {% endfor %}
 		  </tbody>
@@ -85,7 +66,71 @@
 		$(on_load);
 
 	$("#date-search").click(function() {
+		setTimeout(function () { $("#date-search").prop('disabled', true); }, 0);
 		$("#data-form").attr("action", "active-users/");
 	});
+
+	$('body').append('<div style="" id="loadingDiv"><div class="loader">Loading...</div></div>');
+	$(window).on('load', function(){
+	  setTimeout(removeLoader, 0); //wait for page load PLUS two seconds.
+	});
+	function removeLoader() {
+		$("#loadingDiv").fadeOut(500, function () {
+			// fadeOut complete. Remove the loading div
+			$("#loadingDiv").remove(); //makes page more lightweight
+		});
+	}
 </script>
+<style>
+	.loader,
+        .loader:after {
+            border-radius: 50%;
+            width: 10em;
+            height: 10em;
+        }
+        .loader {
+            margin: 60px auto;
+            font-size: 10px;
+            position: relative;
+            text-indent: -9999em;
+            border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-left: 1.1em solid #ffffff;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-animation: load8 1.1s infinite linear;
+            animation: load8 1.1s infinite linear;
+        }
+        @-webkit-keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        #loadingDiv {
+            position:absolute;;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-color:#000;
+			opacity: 0.5;
+        }
+</style>
 {% endblock %}

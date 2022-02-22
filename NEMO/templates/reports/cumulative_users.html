@@ -55,16 +55,16 @@
 		<table border="1" class="dataframe" style="margin-top: 3%">
 		  <thead>
 			<tr style="text-align: right;">
-				<th>first_name</th>
-				<th>last_name</th>
-				<th>type</th>
-				<th>date joined</th>
+				<th>&nbspfirst_name&nbsp</th>
+				<th>&nbsplast_name&nbsp</th>
+				<th>&nbsptype&nbsp</th>
+				<th>&nbspdate joined&nbsp</th>
 			</tr>
 		  </thead>
 		  <tbody>
 			<tr>
 				{% for key, value in context.items %}
-				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+				 <td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>
 				{% endfor %}
 			</tr>
 		  </tbody>
