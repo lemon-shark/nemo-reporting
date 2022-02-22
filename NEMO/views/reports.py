@@ -1,4 +1,5 @@
 import collections
+import itertools
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
@@ -96,25 +97,17 @@ def cumulative_users(request):
     start_date, end_date = date_parameters_dictionary(request)
     list_of_data = [[] for i in range(4)]
     if start_date != '0' or end_date != '0':
-        # print(start_date)
-        # print(end_date)
-        # print(User.objects.all())
         user_data = User.objects.filter(date_joined__gte=start_date, date_joined__lte=end_date)
         print(user_data)
-        d = collections.defaultdict(list)
         for user in user_data:
-            d['first_name'].append(user.first_name)
             list_of_data[0].append(user.first_name)
-            d['last_name'].append(user.last_name)
             list_of_data[1].append(user.last_name)
-            d['type'].append(user.type)
             list_of_data[2].append(user.type)
             print(user.date_joined)
-            d['date_joined'].append(str(user.date_joined)[0:10])
             list_of_data[3].append(str(user.date_joined)[0:10])
-        keys_values = d.items()
-        new_d = {str(key): str(value) for key, value in keys_values}
-        print(new_d)
-        return render(request, "reports/cumulative_users.html", {'context': new_d, 'start': start_date, 'end': end_date})
+        print(list_of_data)
+        list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+        print(list_output)
+        return render(request, "reports/cumulative_users.html", {'context': list_output, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/cumulative_users.html", {'start': start_date, 'end': end_date})
