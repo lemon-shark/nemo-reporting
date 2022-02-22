@@ -1,7 +1,7 @@
+from django.core.paginator import Paginator, EmptyPage
 from django.utils import timezone
 from django.shortcuts import render
 from dateutil import parser
-
 from NEMO.models import UsageEvent, User
 
 
@@ -34,10 +34,10 @@ def date_parameters_dictionary(request):
     return start_date, end_date
 
 
-def usage_events(request):
+def usage_events(request, page=1):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
-        tool_data = UsageEvent.objects.filter(end__gt=start_date, end__lte=end_date)
+        tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date, end__lte=end_date)
         d = {}
         print(start_date)
         print(end_date)
@@ -52,7 +52,13 @@ def usage_events(request):
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
         print(new_d)
-        return render(request, "reports/usage_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
+        paginator = Paginator(tuple(new_d.items()), 25)
+        try:
+            tools = paginator.page(page)
+        except EmptyPage:
+            # if we exceed the page limit we return the last page
+            tools = paginator.page(paginator.num_pages)
+        return render(request, "reports/usage_events.html", {'context': tools, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/usage_events.html", {'start': start_date, 'end': end_date})
 
@@ -60,16 +66,19 @@ def usage_events(request):
 def active_users(request):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
-        tool_data = UsageEvent.objects.filter(end__gt=start_date, end__lte=end_date)
+        tool_data = UsageEvent.objects.only("user", "end").select_related('user').filter(end__gt=start_date, end__lte=end_date)
         d = {}
         for tool in tool_data:
             d[tool.user] = tool.user
         keys_values = d.items()
         new_d = {str(key): str(value) for key, value in keys_values}
-        total_d = {'Total': str(len(new_d))}
-        res = {**total_d, **new_d}
-        print(res)
-        return render(request, "reports/active_users.html", {'context': res, 'start': start_date, 'end': end_date})
+        if len(new_d) != 0:
+            total_d = {'Total': str(len(new_d))}
+            res = {**total_d, **new_d}
+            print(res)
+            return render(request, "reports/active_users.html", {'context': res, 'start': start_date, 'end': end_date})
+        else:
+            return render(request, "reports/active_users.html", {'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/active_users.html", {'start': start_date, 'end': end_date})
 

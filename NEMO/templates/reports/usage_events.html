@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'pagination/pagination_base.html' %}
 {% load static %}
 {% block extrahead %}
 	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
@@ -7,6 +7,7 @@
 {% endblock %}
 {% block title %}Reports{% endblock %}
 {% block content %}
+{% block before_pagination %}
 <h1 style="margin-bottom: 25px">Tool Usage Report</h1>
 <form id="date-form" method="POST">
 	{% csrf_token %}
@@ -32,6 +33,8 @@
 </div>
 <div style="height: 5px; border-top: 1px dotted #eee"></div>
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
+	{% endblock %}
+	{% block pagination_content %}
 	{% if start != '0' %}
 		{% if context %}
 		<table border="1" class="dataframe" style="margin-top: 3%">
@@ -42,10 +45,10 @@
 			</tr>
 		  </thead>
 		  <tbody>
-		  {% for key, value in context.items %}
+		  {% for key in context %}
 			<tr>
 				 <th style="border-bottom: 1px solid lightgray">{{key}}</th>
-				 <td style="border-bottom: 1px solid lightgray;text-align: right">{{value}}</td>
+<!--				 <td style="border-bottom: 1px solid lightgray;text-align: right">{{value}}</td>-->
 			</tr>
 		  {% endfor %}
 		  </tbody>
@@ -55,6 +58,8 @@
 		{% endif %}
 	{% endif %}
   </div>
+{% endblock %}
+{% block after_pagination %}
 <script>
 	function on_load()
 		{
@@ -135,4 +140,5 @@
 			opacity: 0.5;
         }
 </style>
+{% endblock %}
 {% endblock %}
