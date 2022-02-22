@@ -1,12 +1,8 @@
-from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.shortcuts import render
 from dateutil import parser
-from django.views.decorators.http import require_http_methods
-from rest_framework.utils import json
 
 from NEMO.models import UsageEvent, User
-from NEMO.utilities import get_month_timeframe
 
 
 def reports(request):
