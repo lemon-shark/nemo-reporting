@@ -7,7 +7,6 @@
 {% endblock %}
 {% block title %}Reports{% endblock %}
 {% block content %}
-{% block before_pagination %}
 <h1 style="margin-bottom: 25px">Tool Usage Report</h1>
 <form id="date-form" method="POST">
 	{% csrf_token %}
@@ -33,33 +32,50 @@
 </div>
 <div style="height: 5px; border-top: 1px dotted #eee"></div>
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
-	{% endblock %}
-	{% block pagination_content %}
 	{% if start != '0' %}
 		{% if context %}
-		<table border="1" class="dataframe" style="margin-top: 3%">
+		<table border="1" class="table table-bordered" style="margin-top: 3%">
 		  <thead>
-			<tr style="text-align: right;">
+			<tr>
 			  <th>Tools</th>
 			  <th>Time</th>
 			</tr>
 		  </thead>
 		  <tbody>
-		  {% for key in context %}
+		  {% for key, value in context.items %}
 			<tr>
 				 <th style="border-bottom: 1px solid lightgray">{{key}}</th>
-<!--				 <td style="border-bottom: 1px solid lightgray;text-align: right">{{value}}</td>-->
+				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
 			</tr>
 		  {% endfor %}
 		  </tbody>
 		</table>
+<!--		{% if context.has_other_pages %}-->
+<!--	  	<ul class="pagination">-->
+<!--		{% if context.has_previous %}-->
+<!--		  <li><a href="?page={{ context.previous_page_number }}">&laquo;</a></li>-->
+<!--		{% else %}-->
+<!--		  <li class="disabled"><span>&laquo;</span></li>-->
+<!--		{% endif %}-->
+<!--		{% for i in context.paginator.page_range %}-->
+<!--		  {% if context.number == i %}-->
+<!--			<li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>-->
+<!--		  {% else %}-->
+<!--			<li><a href="?page={{ i }}">{{ i }}</a></li>-->
+<!--		  {% endif %}-->
+<!--		{% endfor %}-->
+<!--		{% if context.has_next %}-->
+<!--		  <li><a href="?page={{ context.next_page_number }}">&raquo;</a></li>-->
+<!--		{% else %}-->
+<!--		  <li class="disabled"><span>&raquo;</span></li>-->
+<!--		{% endif %}-->
+<!--		  </ul>-->
+<!--		{% endif %}-->
 		{% else %}
 			No access records exist between your input time.
 		{% endif %}
 	{% endif %}
   </div>
-{% endblock %}
-{% block after_pagination %}
 <script>
 	function on_load()
 		{
@@ -140,5 +156,4 @@
 			opacity: 0.5;
         }
 </style>
-{% endblock %}
 {% endblock %}

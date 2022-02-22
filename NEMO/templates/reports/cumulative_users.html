@@ -22,28 +22,9 @@
 	<div class="col-sm-3 col-md-3 col-lg-2">
 		<input type="text" id="end_time" name="end_time" class="form-control text-center" placeholder="Choose a date" required>
 	</div>
-<!--    <div class="col-sm-6">-->
-<!--		<div class="form-group">-->
-<!--			<label for="start_time">Date joined start time</label>-->
-<!--			<div class="col-sm-10 no-padding-sides">-->
-<!--				<input id="start_time" name="start_time" class="form-control text-center" type="text" placeholder="Select usage start time" required>-->
-<!--			</div>-->
-<!--		</div>-->
-<!--	</div>-->
-<!--	<div class="col-sm-5 col-sm-offset-1">-->
-<!--		<div class="form-group">-->
-<!--			<label for="end_time">Date joined end time</label>-->
-<!--			<div class="col-sm-12 no-padding-sides">-->
-<!--				<input id="end_time" name="end_time" class="form-control text-center" type="text" placeholder="Select usage end time" required>-->
-<!--			</div>-->
-<!--		</div>-->
-<!--	</div>-->
 	<div class="col-md-3">
 		<button id="date-search" type="submit" class="btn btn-success">Search</button>
 	</div>
-<!--    <div class="col-sm-2 text-center" style="margin-top: 3%">-->
-<!--		<button id="date-search" type="submit" class="btn btn-success">Search</button>-->
-<!--	</div>-->
 </form>
 <div id="export_button" class="col-sm-2 text-center" style="margin-top: 3%;display: none">
 		<button type="submit" class="btn btn-success">Export</button>
@@ -87,7 +68,7 @@
 		$(on_load);
 
 	$("#date-search").click(function() {
-		$("#data-form").attr("action", "active-users/");
+		$("#data-form").attr("action", "cumulative-users/");
 	});
 </script>
 {% endblock %}

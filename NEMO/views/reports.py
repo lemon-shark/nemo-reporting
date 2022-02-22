@@ -1,4 +1,4 @@
-from django.core.paginator import Paginator, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
 from dateutil import parser
@@ -34,8 +34,9 @@ def date_parameters_dictionary(request):
     return start_date, end_date
 
 
-def usage_events(request, page=1):
+def usage_events(request):
     start_date, end_date = date_parameters_dictionary(request)
+    page = request.GET.get('page', 1)
     if start_date != '0' or end_date != '0':
         tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date, end__lte=end_date)
         d = {}
@@ -52,13 +53,17 @@ def usage_events(request, page=1):
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
         print(new_d)
-        paginator = Paginator(tuple(new_d.items()), 25)
-        try:
-            tools = paginator.page(page)
-        except EmptyPage:
-            # if we exceed the page limit we return the last page
-            tools = paginator.page(paginator.num_pages)
-        return render(request, "reports/usage_events.html", {'context': tools, 'start': start_date, 'end': end_date})
+        # paginator = Paginator(tuple(new_d.items()), 25)
+        # try:
+        #     tools = paginator.page(page)
+        #     print(page)
+        # except PageNotAnInteger:
+        #     tools = paginator.page(1)
+        # except EmptyPage:
+        #     # if we exceed the page limit we return the last page
+        #     tools = paginator.page(paginator.num_pages)
+        #     print(paginator.num_pages)
+        return render(request, "reports/usage_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/usage_events.html", {'start': start_date, 'end': end_date})
 
@@ -99,4 +104,4 @@ def cumulative_users(request):
         print(new_d)
         return render(request, "reports/cumulative_users.html", {'context': new_d, 'start': start_date, 'end': end_date})
     else:
-        return render(request, "reports/active_users.html", {'start': start_date, 'end': end_date})
+        return render(request, "reports/cumulative_users.html", {'start': start_date, 'end': end_date})
