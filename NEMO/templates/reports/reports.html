@@ -23,7 +23,7 @@
 							<option value="active_user">Active Users</option>
 							<option value="cumulative_user">Cumulative Users</option>
 							<option value="invoice">Invoices</option>
-							<option value="group">Group Breakdown</option>
+							<option value="groups">Group Breakdown</option>
 						</select>
 					</div>
 					<div class="col-sm-2 text-center">
@@ -41,6 +41,8 @@
 			 	 $("#report_select_form").attr("action","active-users/");
 			 } else if ($("#report_type").val() == 'cumulative_user') {
 			 	 $("#report_select_form").attr("action","cumulative-users/");
+			 } else if ($("#report_type").val() == 'groups') {
+			 	 $("#report_select_form").attr("action","groups/");
 			 }
 			document.getElementById('report_select_form').submit();
 		});

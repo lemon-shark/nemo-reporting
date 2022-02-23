@@ -7,7 +7,7 @@
 {% endblock %}
 {% block title %}Reports{% endblock %}
 {% block content %}
-<h1>Cumulative User Report</h1>
+<h1>Groups Breakdown</h1>
 <form id="date-form" method="POST" action="">
 	{% csrf_token %}
 	<div class="control-label col-sm-2">
@@ -33,14 +33,13 @@
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
 	{% if start != '0' %}
 		{% if context %}
-		<p>Cumulative users from {{start}} to {{end}}</p>
+		<p>Groups from {{start}} to {{end}}</p>
 		<table border="1" class="table table-bordered" style="margin-top: 3%">
 		  <thead>
 			<tr>
-				<th>&nbspFirst Name&nbsp</th>
-				<th>&nbspLast Name&nbsp</th>
-				<th>&nbspType&nbsp</th>
-				<th>&nbspDate Joined (YYYY-MM-DD)&nbsp</th>
+				<th>&nbspGroup Name&nbsp</th>
+				<th>&nbspGroup Type&nbsp</th>
+				<th>&nbspStart Date&nbsp</th>
 			</tr>
 		  </thead>
 		  <tbody>
@@ -54,7 +53,7 @@
 		  </tbody>
 		</table>
 		{% else %}
-			No user records exist between your input time.
+			No groups records exist between your input time.
 		{% endif %}
 	{% endif %}
   </div>
@@ -71,7 +70,7 @@
 		$(on_load);
 
 	$("#date-search").click(function() {
-		$("#data-form").attr("action", "cumulative-users/");
+		$("#data-form").attr("action", "groups/");
 	});
 </script>
 {% endblock %}

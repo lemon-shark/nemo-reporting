@@ -39,13 +39,13 @@
 		  <thead>
 			<tr>
 			  <th>Tools</th>
-			  <th>Time</th>
+			  <th>Time (hhh:mm:ss)</th>
 			</tr>
 		  </thead>
 		  <tbody>
 		  {% for key, value in context.items %}
 			<tr>
-				 <th style="border-bottom: 1px solid lightgray">{{key}}</th>
+				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
 				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
 			</tr>
 		  {% endfor %}

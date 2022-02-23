@@ -5,7 +5,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
 from dateutil import parser
-from NEMO.models import UsageEvent, User
+from NEMO.models import UsageEvent, User, Account
 
 
 def reports(request):
@@ -17,9 +17,7 @@ def convert_timedelta(duration):
     hours = days * 24 + seconds // 3600
     minutes = (seconds % 3600) // 60
     seconds = (seconds % 60)
-    return '{} hour{}, {} minute{}, {} second{}'.format(hours, 's' if hours != 1 else '',
-                                                        minutes, 's' if minutes != 1 else '',
-                                                        seconds, 's' if seconds != 1 else '')
+    return '{}:{}:{}'.format(hours, minutes, seconds)
 
 
 def parse_start_end_date(start, end):
@@ -41,7 +39,8 @@ def usage_events(request):
     start_date, end_date = date_parameters_dictionary(request)
     # page = request.GET.get('page', 1)
     if start_date != '0' or end_date != '0':
-        tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date, end__lte=end_date)
+        tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date,
+                                                                                end__lte=end_date)
         d = {}
         print(start_date)
         print(end_date)
@@ -74,16 +73,15 @@ def usage_events(request):
 def active_users(request):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
-        tool_data = UsageEvent.objects.only("user", "end").select_related('user').filter(end__gt=start_date, end__lte=end_date)
+        tool_data = UsageEvent.objects.only("user", "end").select_related('user').filter(end__gt=start_date,
+                                                                                         end__lte=end_date).order_by(
+            "user")
         d = {}
         for tool in tool_data:
             d[tool.user] = tool.user
         keys_values = d.items()
         new_d = {str(key): str(value) for key, value in keys_values}
         if len(new_d) != 0:
-            # total_d = {'Total': str(len(new_d))}
-            # res = {**total_d, **new_d}
-            # print(res)
             total = len(new_d)
             return render(request, "reports/active_users.html", {'context': new_d, 'total': total, 'start': start_date,
                                                                  'end': end_date})
@@ -97,7 +95,8 @@ def cumulative_users(request):
     start_date, end_date = date_parameters_dictionary(request)
     list_of_data = [[] for i in range(4)]
     if start_date != '0' or end_date != '0':
-        user_data = User.objects.filter(date_joined__gte=start_date, date_joined__lte=end_date)
+        user_data = User.objects.only("first_name", "last_name", "type", "date_joined").filter(
+            date_joined__gte=start_date, date_joined__lte=end_date).order_by("date_joined")
         print(user_data)
         for user in user_data:
             list_of_data[0].append(user.first_name)
@@ -108,6 +107,30 @@ def cumulative_users(request):
         print(list_of_data)
         list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
         print(list_output)
-        return render(request, "reports/cumulative_users.html", {'context': list_output, 'start': start_date, 'end': end_date})
+        return render(request, "reports/cumulative_users.html",
+                      {'context': list_output, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/cumulative_users.html", {'start': start_date, 'end': end_date})
+
+
+def groups(request):
+    start_date, end_date = date_parameters_dictionary(request)
+    list_of_data = [[] for i in range(3)]
+    if start_date != '0' or end_date != '0':
+        groups_data = Account.objects.filter(start_date__gte=start_date, start_date__lte=end_date)
+        # print(groups_data)
+        for group in groups_data:
+            list_of_data[0].append(group.name)
+            list_of_data[1].append(group.type)
+            list_of_data[2].append(str(group.start_date))
+            # print(group.start_date)
+        # print(list_of_data)
+        breakdown = collections.Counter(list_of_data[1])
+        print(type(breakdown))
+        print(breakdown['Industry'])
+        list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+        # print(list_output)
+        return render(request, "reports/groups.html", {'context': list_output, 'breakdown': breakdown,
+                                                       'start': start_date, 'end': end_date})
+    else:
+        return render(request, "reports/groups.html", {'start': start_date, 'end': end_date})

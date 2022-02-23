@@ -323,6 +323,7 @@ urlpatterns += [
     url(r'^reports/usage-events/$', reports.usage_events, name='usage_events'),
     url(r'^reports/active-users/$', reports.active_users, name='active_users'),
     url(r'^reports/cumulative-users/$', reports.cumulative_users, name='cumulative_users'),
+    url(r'^reports/groups/$', reports.groups, name='groups'),
 ]
 
 
