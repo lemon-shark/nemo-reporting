@@ -1,0 +1,160 @@
+{% extends 'pagination/pagination_base.html' %}
+{% load static %}
+{% block extrahead %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<link rel="stylesheet" type="text/css" href="{% static "NEMO_4dlabs/style.css" %}"/>
+{% endblock %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 25px">Facility Usage Report</h1>
+<form id="date-form" method="POST">
+	{% csrf_token %}
+	<div class="control-label col-sm-2">
+		<label for="start_time">Select from</label>
+	</div>
+	<div class="col-sm-3 col-md-3 col-lg-2">
+		<input type="text" id="start_time" name="start_time" class="form-control text-center" placeholder="Choose a date" required>
+	</div>
+	<div class="control-label col-sm-1 col-sm-1 col-lg-1" style="text-align: center">
+		<label for="end_time">to</label>
+	</div>
+	<div class="col-sm-3 col-md-3 col-lg-2">
+		<input type="text" id="end_time" name="end_time" class="form-control text-center" placeholder="Choose a date" required>
+	</div>
+	<div class="col-md-3">
+		<button id="date-search" type="submit" class="btn btn-success">Search</button>
+	</div>
+</form>
+
+<div id="export_button" class="col-sm-2 text-center" style="margin-top: 3%;display: none">
+		<button type="submit" class="btn btn-success">Export</button>
+</div>
+<div style="height: 5px; border-top: 1px dotted #eee"></div>
+<div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
+	{% if start != '0' %}
+		{% if context %}
+		<p>Tool usage events from {{start}} to {{end}}</p>
+		<table border="1" class="table table-bordered" style="margin-top: 3%">
+		  <thead>
+			<tr>
+			  <th>Project</th>
+			  <th>Time</th>
+			</tr>
+		  </thead>
+		  <tbody>
+		  {% for key, value in context.items %}
+			<tr>
+				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
+				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+			</tr>
+		  {% endfor %}
+		  </tbody>
+		</table>
+<!--		{% if context.has_other_pages %}-->
+<!--	  	<ul class="pagination">-->
+<!--		{% if context.has_previous %}-->
+<!--		  <li><a href="?page={{ context.previous_page_number }}">&laquo;</a></li>-->
+<!--		{% else %}-->
+<!--		  <li class="disabled"><span>&laquo;</span></li>-->
+<!--		{% endif %}-->
+<!--		{% for i in context.paginator.page_range %}-->
+<!--		  {% if context.number == i %}-->
+<!--			<li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>-->
+<!--		  {% else %}-->
+<!--			<li><a href="?page={{ i }}">{{ i }}</a></li>-->
+<!--		  {% endif %}-->
+<!--		{% endfor %}-->
+<!--		{% if context.has_next %}-->
+<!--		  <li><a href="?page={{ context.next_page_number }}">&raquo;</a></li>-->
+<!--		{% else %}-->
+<!--		  <li class="disabled"><span>&raquo;</span></li>-->
+<!--		{% endif %}-->
+<!--		  </ul>-->
+<!--		{% endif %}-->
+		{% else %}
+			No facility records exist between your input time.
+		{% endif %}
+	{% endif %}
+  </div>
+<script>
+	function on_load()
+		{
+			var timepicker_properties =
+			{
+				format: 'MM/DD/YYYY'
+			};
+			$('#start_time').datetimepicker(timepicker_properties);
+			$('#end_time').datetimepicker(timepicker_properties);
+		}
+		$(on_load);
+
+	$("#date-search").click(function() {
+		setTimeout(function () { $("#date-search").prop('disabled', true); }, 0);
+		$("#data-form").attr("action", "facility-usage/");
+	});
+
+	$('body').append('<div style="" id="loadingDiv"><div class="loader">Loading...</div></div>');
+	$(window).on('load', function(){
+	  setTimeout(removeLoader, 0); //wait for page load PLUS two seconds.
+	});
+	function removeLoader() {
+		$("#loadingDiv").fadeOut(500, function () {
+			// fadeOut complete. Remove the loading div
+			$("#loadingDiv").remove(); //makes page more lightweight
+		});
+	}
+</script>
+<style>
+	.loader,
+        .loader:after {
+            border-radius: 50%;
+            width: 10em;
+            height: 10em;
+        }
+        .loader {
+            margin: 60px auto;
+            font-size: 10px;
+            position: relative;
+            text-indent: -9999em;
+            border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+            border-left: 1.1em solid #ffffff;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-animation: load8 1.1s infinite linear;
+            animation: load8 1.1s infinite linear;
+        }
+        @-webkit-keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        #loadingDiv {
+            position:absolute;;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-color:#000;
+			opacity: 0.5;
+        }
+</style>
+{% endblock %}

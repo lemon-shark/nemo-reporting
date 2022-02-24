@@ -43,6 +43,8 @@
 			 	 $("#report_select_form").attr("action","cumulative-users/");
 			 } else if ($("#report_type").val() == 'groups') {
 			 	 $("#report_select_form").attr("action","groups/");
+			 } else if ($("#report_type").val() == 'facility') {
+			 	 $("#report_select_form").attr("action","facility-usage/");
 			 }
 			document.getElementById('report_select_form').submit();
 		});

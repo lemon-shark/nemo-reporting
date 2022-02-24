@@ -1,6 +1,7 @@
 import collections
 import itertools
 
+from NEMO_billing.invoices.models import Invoice
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
@@ -125,12 +126,35 @@ def groups(request):
             list_of_data[2].append(str(group.start_date))
             # print(group.start_date)
         # print(list_of_data)
+        print(list_of_data[1])
         breakdown = collections.Counter(list_of_data[1])
         print(type(breakdown))
-        print(breakdown['Industry'])
+        print(breakdown)
         list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
         # print(list_output)
         return render(request, "reports/groups.html", {'context': list_output, 'breakdown': breakdown,
                                                        'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/groups.html", {'start': start_date, 'end': end_date})
+
+
+def facility_usage(request):
+    start_date, end_date = date_parameters_dictionary(request)
+    if start_date != '0' or end_date != '0':
+        invoice_data = Invoice.objects.only("project_details", "start", "end").select_related('project_details').filter(end__gt=start_date,
+                                                                                                  end__lte=end_date)
+        d = {}
+        for invoice in invoice_data:
+            start = invoice.start
+            if invoice.end:
+                end = invoice.end
+                if invoice.project_details.project_name not in d:
+                    d[invoice.project_details.project_name] = end - start
+                else:
+                    d[invoice.project_details.project_name] += end - start
+        keys_values = d.items()
+        new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
+        print(new_d)
+        return render(request, "reports/facility_usage.html", {'context': new_d, 'start': start_date, 'end': end_date})
+    else:
+        return render(request, "reports/facility_usage.html", {'start': start_date, 'end': end_date})
