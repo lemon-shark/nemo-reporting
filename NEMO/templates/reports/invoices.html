@@ -7,7 +7,7 @@
 {% endblock %}
 {% block title %}Reports{% endblock %}
 {% block content %}
-<h1 style="margin-bottom: 25px">Tool Usage Report</h1>
+<h1 style="margin-bottom: 25px">Invoices Report</h1>
 <form id="date-form" method="POST">
 	{% csrf_token %}
 	<div class="control-label col-sm-2">
@@ -73,7 +73,7 @@
 <!--		  </ul>-->
 <!--		{% endif %}-->
 		{% else %}
-			No access records exist between your input time.
+			No invoice records exist between your input time.
 		{% endif %}
 	{% endif %}
   </div>
@@ -91,7 +91,7 @@
 
 	$("#date-search").click(function() {
 		setTimeout(function () { $("#date-search").prop('disabled', true); }, 0);
-		$("#data-form").attr("action", "usage-events/");
+		$("#data-form").attr("action", "invoices/");
 	});
 
 	$('body').append('<div style="" id="loadingDiv"><div class="loader">Loading...</div></div>');
@@ -156,20 +156,5 @@
             background-color:#000;
 			opacity: 0.5;
         }
-		table {
-		  border-collapse: collapse;
-		  border-spacing: 0;
-		  width: 100%;
-		  border: 1px solid #ddd;
-		}
-
-		th, td {
-		  text-align: left;
-		  padding: 16px;
-		}
-
-		tr:nth-child(even) {
-		  background-color: #f2f2f2;
-		}
 </style>
 {% endblock %}

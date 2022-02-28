@@ -22,7 +22,7 @@
 							<option value="facility">Facility Usage</option>
 							<option value="active_user">Active Users</option>
 							<option value="cumulative_user">Cumulative Users</option>
-							<option value="invoice">Invoices</option>
+							<option value="invoices">Invoices</option>
 							<option value="groups">Group Breakdown</option>
 						</select>
 					</div>
@@ -45,6 +45,8 @@
 			 	 $("#report_select_form").attr("action","groups/");
 			 } else if ($("#report_type").val() == 'facility') {
 			 	 $("#report_select_form").attr("action","facility-usage/");
+			 } else if ($("#report_type").val() == 'invoices') {
+			 	 $("#report_select_form").attr("action","invoices/");
 			 }
 			document.getElementById('report_select_form').submit();
 		});

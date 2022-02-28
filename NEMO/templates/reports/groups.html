@@ -34,24 +34,40 @@
 	{% if start != '0' %}
 		{% if context %}
 		<p>Groups from {{start}} to {{end}}</p>
-		<table border="1" class="table table-bordered" style="margin-top: 3%">
-		  <thead>
-			<tr>
-				<th>&nbspGroup Name&nbsp</th>
-				<th>&nbspGroup Type&nbsp</th>
-				<th>&nbspStart Date&nbsp</th>
-			</tr>
-		  </thead>
-		  <tbody>
-				{% for list in context %}
-					<tr>
-					{% for data in list %}
-						<td style="border-bottom: 1px solid lightgray">&nbsp{{data}}&nbsp</td>
+		<div class="row">
+			<div class="column">
+			<table border="1" class="table table-bordered" style="margin-top: 3%">
+			  <thead>
+				<tr>
+					<th>&nbspGroup Name&nbsp</th>
+					<th>&nbspGroup Type&nbsp</th>
+					<th>&nbspStart Date&nbsp</th>
+				</tr>
+			  </thead>
+			  <tbody>
+					{% for list in context %}
+						<tr>
+						{% for data in list %}
+							<td style="border-bottom: 1px solid lightgray">&nbsp{{data}}&nbsp</td>
+						{% endfor %}
+						</tr>
 					{% endfor %}
-					</tr>
-				{% endfor %}
-		  </tbody>
-		</table>
+			  </tbody>
+			</table>
+			</div>
+			<div class="column">
+			<table border="1" class="table table-bordered" style="margin-top: 3%">
+			  <tbody>
+					{% for k, v in breakdown %}
+						<tr>
+							<th>&nbsp{{k}}&nbsp</th>
+							<td style="border-bottom: 1px solid lightgray">&nbsp{{v}}&nbsp</td>
+						</tr>
+					{% endfor %}
+			  </tbody>
+			</table>
+			</div>
+		</div>
 		{% else %}
 			No groups records exist between your input time.
 		{% endif %}
@@ -73,4 +89,43 @@
 		$("#data-form").attr("action", "groups/");
 	});
 </script>
+<style>
+	* {
+		  box-sizing: border-box;
+		}
+
+		.row {
+		  margin-left:-5px;
+		  margin-right:-5px;
+		}
+
+		.column {
+		  float: left;
+		  width: 50%;
+		  padding: 5px;
+		}
+
+		/* Clearfix (clear floats) */
+		.row::after {
+		  content: "";
+		  clear: both;
+		  display: table;
+		}
+
+		table {
+		  border-collapse: collapse;
+		  border-spacing: 0;
+		  width: 100%;
+		  border: 1px solid #ddd;
+		}
+
+		th, td {
+		  text-align: left;
+		  padding: 16px;
+		}
+
+		tr:nth-child(even) {
+		  background-color: #f2f2f2;
+		}
+</style>
 {% endblock %}
