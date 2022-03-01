@@ -35,15 +35,13 @@
 		{% if context %}
 		<p>Cumulative users from {{start}} to {{end}}</p>
 		<table border="1" class="table table-bordered" style="margin-top: 3%">
-		  <thead>
-			<tr>
+		  <tbody>
+		  	<tr>
 				<th style="font-size:15px">&nbspFirst Name&nbsp</th>
 				<th style="font-size:15px">&nbspLast Name&nbsp</th>
 				<th style="font-size:15px">&nbspType&nbsp</th>
 				<th style="font-size:15px">&nbspDate Joined (YYYY-MM-DD)&nbsp</th>
 			</tr>
-		  </thead>
-		  <tbody>
 				{% for list in context %}
 					<tr>
 					{% for data in list %}

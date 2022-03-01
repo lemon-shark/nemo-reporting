@@ -36,13 +36,11 @@
 		{% if context %}
 		<p>Tool usage events from {{start}} to {{end}}</p>
 		<table border="1" class="table table-bordered" style="margin-top: 3%">
-		  <thead>
-			<tr>
+		  <tbody>
+		  <tr>
 			  <th style="font-size:15px">Tools</th>
 			  <th style="font-size:15px">Time (hhh:mm:ss)</th>
-			</tr>
-		  </thead>
-		  <tbody>
+		  </tr>
 		  {% for key, value in context.items %}
 			<tr>
 				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>

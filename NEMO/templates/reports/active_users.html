@@ -36,12 +36,10 @@
 		{% if context %}
 		<p>Active users from {{start}} to {{end}}</p>
 		<table border="1" class="dataframe" style="margin-top: 3%">
-		  <thead>
-			<tr style="text-align: right;">
-			  <th style="font-size:15px">User: {{total}} in total</th>
-			</tr>
-		  </thead>
 		  <tbody>
+		  <tr style="text-align: right;">
+			  <th style="font-size:15px">User: {{total}} in total</th>
+		  </tr>
 		  {% for key, value in context.items %}
 			<tr>
 				 <td style="border-bottom: 1px solid lightgray">&nbsp{{value}}&nbsp</td>
