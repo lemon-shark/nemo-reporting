@@ -39,9 +39,9 @@
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <thead>
 				<tr>
-					<th>&nbspGroup Name&nbsp</th>
-					<th>&nbspGroup Type&nbsp</th>
-					<th>&nbspStart Date&nbsp</th>
+					<th style="font-size:15px">&nbspGroup Name&nbsp</th>
+					<th style="font-size:15px">&nbspGroup Type&nbsp</th>
+					<th style="font-size:15px">&nbspStart Date&nbsp</th>
 				</tr>
 			  </thead>
 			  <tbody>
@@ -60,7 +60,7 @@
 			  <tbody>
 					{% for k, v in breakdown %}
 						<tr>
-							<th>&nbsp{{k}}&nbsp</th>
+							<th style="font-size:15px">&nbsp{{k}}&nbsp</th>
 							<td style="border-bottom: 1px solid lightgray">&nbsp{{v}}&nbsp</td>
 						</tr>
 					{% endfor %}
@@ -124,7 +124,7 @@
 		  padding: 16px;
 		}
 
-		tr:nth-child(even) {
+		tr:nth-child(odd) {
 		  background-color: #f2f2f2;
 		}
 </style>

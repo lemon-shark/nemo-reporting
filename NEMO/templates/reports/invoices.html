@@ -34,23 +34,44 @@
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
 	{% if start != '0' %}
 		{% if context %}
-		<p>Tool usage events from {{start}} to {{end}}</p>
-		<table border="1" class="table table-bordered" style="margin-top: 3%">
-		  <thead>
-			<tr>
-			  <th>Tools</th>
-			  <th>Time (hhh:mm:ss)</th>
-			</tr>
-		  </thead>
-		  <tbody>
-		  {% for key, value in context.items %}
-			<tr>
-				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
-				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
-			</tr>
-		  {% endfor %}
-		  </tbody>
-		</table>
+		<p>Invoices from {{start}} to {{end}}</p>
+		<div class="row">
+			<div class="column">
+				<table border="1" class="table table-bordered" style="margin-top: 3%">
+				  <thead>
+					<tr>
+					  <th style="font-size:15px">Period</th>
+					  <th style="font-size:15px">Invoiced Amount</th>
+					</tr>
+				  </thead>
+				  <tbody>
+				  {% for key, value in context.items %}
+					<tr>
+						 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
+						 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+					</tr>
+				  {% endfor %}
+				  </tbody>
+				</table>
+			</div>
+			<div class="column">
+			<table border="1" class="table table-bordered" style="margin-top: 3%">
+				  <thead>
+					<tr>
+					  <th style="font-size:15px">Core Facility</th>
+					  <th style="font-size:15px">Invoiced Amount</th>
+					</tr>
+				  </thead>
+				  <tbody>
+				  {% for key, value in facility.items %}
+					<tr>
+						 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
+						 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+					</tr>
+				  {% endfor %}
+				  </tbody>
+				</table>
+			</div>
 <!--		{% if context.has_other_pages %}-->
 <!--	  	<ul class="pagination">-->
 <!--		{% if context.has_previous %}-->
@@ -156,5 +177,40 @@
             background-color:#000;
 			opacity: 0.5;
         }
+		* {
+		  box-sizing: border-box;
+		}
+
+		.row {
+		  margin-left:-5px;
+		  margin-right:-5px;
+		}
+
+		.column {
+		  float: left;
+		  width: 50%;
+		  padding: 5px;
+		}
+
+		/* Clearfix (clear floats) */
+		.row::after {
+		  content: "";
+		  clear: both;
+		  display: table;
+		}
+		table {
+		  border-collapse: collapse;
+		  border-spacing: 0;
+		  width: 100%;
+		  border: 1px solid #ddd;
+		}
+		th, td {
+		  text-align: left;
+		  padding: 16px;
+		}
+
+		tr:nth-child(odd) {
+		  background-color: #f2f2f2;
+		}
 </style>
 {% endblock %}

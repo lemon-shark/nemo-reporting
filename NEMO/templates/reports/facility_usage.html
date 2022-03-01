@@ -38,13 +38,11 @@
 	    <div class="row">
 			<div class="column">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
-			  <thead>
-				<tr>
-				  <th>Project</th>
-				  <th>Billable Time (hhh:mm:ss)</th>
-				</tr>
-			  </thead>
 			  <tbody>
+			  <tr>
+				  <th style="font-size:15px">Project</th>
+				  <th style="font-size:15px">Billable Time (hhh:mm:ss)</th>
+				</tr>
 			  {% for key, value in context.items %}
 				<tr>
 					 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
@@ -56,19 +54,17 @@
 			</div>
 			<div class="column">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
-			  <thead>
-				<tr>
-				  <th>Project</th>
-				  <th>Billable Time (hhh:mm:ss)</th>
-				</tr>
-			  </thead>
 			  <tbody>
-			  {% for key, value in context.items %}
-				<tr>
-					 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
-					 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
-				</tr>
-			  {% endfor %}
+			  		{% for k, v in category %}
+						<tr>
+							<th style="font-size:15px">&nbsp{{k}}&nbsp</th>
+							<td style="border-bottom: 1px solid lightgray">&nbsp{{v}}&nbsp</td>
+						</tr>
+					{% endfor %}
+			  		  <tr>
+						  <th style="font-size:15px">&nbspTotal&nbsp</th>
+						  <td style="border-bottom: 1px solid lightgray">&nbsp{{total}}&nbsp</td>
+					  </tr>
 			  </tbody>
 			</table>
 		  </div>
@@ -199,7 +195,6 @@
 		  clear: both;
 		  display: table;
 		}
-
 		table {
 		  border-collapse: collapse;
 		  border-spacing: 0;
@@ -212,7 +207,7 @@
 		  padding: 16px;
 		}
 
-		tr:nth-child(even) {
+		tr:nth-child(odd) {
 		  background-color: #f2f2f2;
 		}
 </style>

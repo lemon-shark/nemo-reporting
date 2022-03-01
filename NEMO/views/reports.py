@@ -1,7 +1,7 @@
 import collections
 import itertools
 
-from NEMO_billing.invoices.models import Invoice
+from NEMO_billing.invoices.models import Invoice, InvoiceSummaryItem, ProjectBillingDetails
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
@@ -141,10 +141,20 @@ def groups(request):
 def facility_usage(request):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
-        facility_data = UsageEvent.objects.only("project", "start", "end").select_related('project', 'invoice').\
+        facility_data = UsageEvent.objects.only("project", "start", "end").select_related('project').\
             filter(end__gt=start_date, end__lte=end_date)
+        project_list = UsageEvent.objects.only("project", "start", "end").select_related('project').\
+            filter(end__gt=start_date, end__lte=end_date).values_list('project')
+        project_data = ProjectBillingDetails.objects.only("project", "category").select_related('category').filter(project__in=project_list)
         d = {}
-        dict_type = {}
+        category = []
+        # print(project_list)
+        for project in project_data:
+            category.append(project.category)
+        category_output = collections.Counter(category).most_common()
+        total = sum(j for i, j in category_output)
+        # print(category_output)
+
         for facility in facility_data:
             start = facility.start
             if facility.end:
@@ -157,32 +167,46 @@ def facility_usage(request):
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
         print(new_d)
-        return render(request, "reports/facility_usage.html", {'context': new_d, 'start': start_date, 'end': end_date})
+        return render(request, "reports/facility_usage.html", {'context': new_d, 'category': category_output,
+                                                               'total': total, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/facility_usage.html", {'start': start_date, 'end': end_date})
 
 
 def invoices(request):
         start_date, end_date = date_parameters_dictionary(request)
-        # page = request.GET.get('page', 1)
+        list_of_data = [[] for i in range(2)]
         if start_date != '0' or end_date != '0':
-            tool_data = UsageEvent.objects.only("tool", "start", "end").select_related('tool').filter(
-                end__gt=start_date,
-                end__lte=end_date)
-            d = {}
+            invoice_data = Invoice.objects.only("total_amount", "created_date").filter(
+                created_date__gt=start_date,
+                created_date__lte=end_date)
+            invoicesummary_data = InvoiceSummaryItem.objects.only("invoice", "amount", "core_facility")
             print(start_date)
             print(end_date)
-            for tool in tool_data:
-                start = tool.start
-                if tool.end:
-                    end = tool.end
-                    if tool.tool not in d:
-                        d[tool.tool] = end - start
-                    else:
-                        d[tool.tool] += end - start
-            keys_values = d.items()
-            new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
-            print(new_d)
+            for invoice in invoice_data:
+                list_of_data[0].append(str(invoice.created_date.strftime("%b")) + "-" + str(invoice.created_date.year))
+                list_of_data[1].append(float(invoice.total_amount))
+                # print(str(invoice.created_date.strftime("%b")) + "-" + str(invoice.created_date.year))
+            # print(list_of_data)
+            list_transpose = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+            # print(list_transpose)
+            d = collections.defaultdict(list)
+            for k, v in list_transpose:
+                d[k].append(v)
+            # print(d)
+            monthly = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d.items()}
+            # print(monthly)
+
+            list_of_summarydata = [[] for i in range(2)]
+            for invoicesummary in invoicesummary_data:
+                list_of_summarydata[0].append(invoicesummary.core_facility)
+                list_of_summarydata[1].append(invoicesummary.amount)
+            list_summary_transpose = list(map(list, itertools.zip_longest(*list_of_summarydata, fillvalue=None)))
+            d_summary = collections.defaultdict(list)
+            for k, v in list_summary_transpose:
+                d_summary[k].append(v)
+            print(d_summary)
+            core_facility = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d_summary.items()}
             # paginator = Paginator(tuple(new_d.items()), 25)
             # try:
             #     tools = paginator.page(page)
@@ -194,6 +218,6 @@ def invoices(request):
             #     tools = paginator.page(paginator.num_pages)
             #     print(paginator.num_pages)
             return render(request, "reports/invoices.html",
-                          {'context': new_d, 'start': start_date, 'end': end_date})
+                          {'context': monthly, 'facility': core_facility, 'start': start_date, 'end': end_date})
         else:
             return render(request, "reports/invoices.html", {'start': start_date, 'end': end_date})
