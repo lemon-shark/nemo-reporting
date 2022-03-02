@@ -35,7 +35,7 @@
 		{% if context %}
 		<p>Groups from {{start}} to {{end}}</p>
 		<div class="row">
-			<div class="column">
+			<div class="column1">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <tbody>
 			  	<tr>
@@ -53,7 +53,7 @@
 			  </tbody>
 			</table>
 			</div>
-			<div class="column">
+			<div class="column2">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <tbody>
 					{% for k, v in breakdown %}
@@ -97,10 +97,16 @@
 		  margin-right:-5px;
 		}
 
-		.column {
+		.column1 {
 		  float: left;
-		  width: 50%;
+		  width: 70%;
 		  padding: 5px;
+		}
+
+		.column2 {
+		  float: right;
+		  width: 30%;
+		  padding: 19px;
 		}
 
 		/* Clearfix (clear floats) */

@@ -186,38 +186,58 @@ def facility_usage(request):
 
 def invoices(request):
     start_date, end_date = date_parameters_dictionary(request)
-    list_of_data = [[] for i in range(2)]
+    list_of_data = [[] for i in range(3)]
     if start_date != '0' or end_date != '0':
-        invoice_data = Invoice.objects.only("invoice", "total_amount", "created_date").filter(
+        invoice_data = Invoice.objects.only("id", "total_amount", "created_date").filter(
             created_date__gt=start_date,
             created_date__lte=end_date)
-        invoicesummary_data = InvoiceSummaryItem.objects.only("invoice", "amount", "core_facility")
-        print(start_date)
-        print(end_date)
-        for invoice in invoice_data:
-            list_of_data[0].append(str(invoice.created_date.strftime("%b")) + "-" + str(invoice.created_date.year))
-            list_of_data[1].append(float(invoice.total_amount))
+        invoice_list = Invoice.objects.only("total_amount", "created_date").filter(
+            created_date__gt=start_date,
+            created_date__lte=end_date).values_list('id')
+        # print(invoice_list)
+        invoicesummary_data = InvoiceSummaryItem.objects.only("invoice", "amount", "core_facility").filter(
+            invoice_id__in=invoice_list)
+        # print(invoicesummary_data)
+        # print(start_date)
+        # print(end_date)
+        for each in invoice_data:
+            list_of_data[0].append(str(each.created_date.strftime("%b")) + "-" + str(each.created_date.year))
+            list_of_data[1].append(float(each.total_amount))
+            list_of_data[2].append(float(each.id))
             # print(str(invoice.created_date.strftime("%b")) + "-" + str(invoice.created_date.year))
         # print(list_of_data)
         list_transpose = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+        df1 = pd.DataFrame(list_transpose, columns=['Period', 'Amount', 'Invoice'])
+        df1['Invoice'] = df1['Invoice'].astype(int)
+        print(df1)
         # print(list_transpose)
-        d = collections.defaultdict(list)
-        for k, v in list_transpose:
-            d[k].append(v)
+        # d = collections.defaultdict(list)
+        # for k, v in list_transpose:
+        #     d[k].append(v)
         # print(d)
-        monthly = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d.items()}
+        # monthly = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d.items()}
         # print(monthly)
+        monthly = {}
 
         list_of_summarydata = [[] for i in range(2)]
         for invoicesummary in invoicesummary_data:
             list_of_summarydata[0].append(invoicesummary.core_facility)
-            list_of_summarydata[1].append(invoicesummary.amount)
+            list_of_summarydata[1].append(invoicesummary.invoice_id)
         list_summary_transpose = list(map(list, itertools.zip_longest(*list_of_summarydata, fillvalue=None)))
         d_summary = collections.defaultdict(list)
-        for k, v in list_summary_transpose:
-            d_summary[k].append(v)
-        print(d_summary)
-        core_facility = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d_summary.items()}
+        df2 = pd.DataFrame(list_summary_transpose, columns=['Facility', 'Invoice'])
+        df2['Invoice'] = df2['Invoice'].astype(int)
+        print(df2)
+        left_join = pd.merge(df1, df2, on='Invoice', how='left')
+        print(left_join)
+        joined = left_join.to_dict('records')
+        # print(joined)
+
+        core_facility = {}
+        # for k, v in list_summary_transpose:
+        #     d_summary[k].append(v)
+        # print(d_summary)
+        # core_facility = {k: "{:.2f}".format(round(sum(v), 2)) for (k, v) in d_summary.items()}
         # paginator = Paginator(tuple(new_d.items()), 25)
         # try:
         #     tools = paginator.page(page)
@@ -229,6 +249,6 @@ def invoices(request):
         #     tools = paginator.page(paginator.num_pages)
         #     print(paginator.num_pages)
         return render(request, "reports/invoices.html",
-                      {'context': monthly, 'facility': core_facility, 'start': start_date, 'end': end_date})
+                      {'context': joined, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/invoices.html", {'start': start_date, 'end': end_date})

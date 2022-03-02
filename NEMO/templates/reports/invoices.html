@@ -35,43 +35,24 @@
 	{% if start != '0' %}
 		{% if context %}
 		<p>Invoices from {{start}} to {{end}}</p>
-		<div class="row">
-			<div class="column">
 				<table border="1" class="table table-bordered" style="margin-top: 3%">
-				  <thead>
-					<tr>
-					  <th style="font-size:15px">Period</th>
-					  <th style="font-size:15px">Invoiced Amount</th>
-					</tr>
-				  </thead>
 				  <tbody>
-				  {% for key, value in context.items %}
+				    <tr>
+					  <th style="font-size:15px">Month</th>
+					  <th style="font-size:15px">Amount</th>
+					  <th style="font-size:15px">Invoice</th>
+						<th style="font-size:15px">Facility</th>
+						<th style="font-size:15px">Facility Amount</th>
+					</tr>
+				  {% for entry in context %}
 					<tr>
-						 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
-						 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+						{% for k, v in entry.items %}
+						<td style="border-bottom: 1px solid lightgray">{{v}}</td>
+						{% endfor %}
 					</tr>
 				  {% endfor %}
 				  </tbody>
 				</table>
-			</div>
-			<div class="column">
-			<table border="1" class="table table-bordered" style="margin-top: 3%">
-				  <thead>
-					<tr>
-					  <th style="font-size:15px">Core Facility</th>
-					  <th style="font-size:15px">Invoiced Amount</th>
-					</tr>
-				  </thead>
-				  <tbody>
-				  {% for key, value in facility.items %}
-					<tr>
-						 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
-						 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
-					</tr>
-				  {% endfor %}
-				  </tbody>
-				</table>
-			</div>
 <!--		{% if context.has_other_pages %}-->
 <!--	  	<ul class="pagination">-->
 <!--		{% if context.has_previous %}-->
