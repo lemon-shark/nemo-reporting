@@ -1,12 +1,13 @@
 import collections
 import itertools
+import pandas as pd
 
 from NEMO_billing.invoices.models import Invoice, InvoiceSummaryItem, ProjectBillingDetails
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from django.shortcuts import render
 from dateutil import parser
-from NEMO.models import UsageEvent, User, Account
+from NEMO.models import UsageEvent, User, Account, Project
 
 
 def reports(request):
@@ -119,7 +120,8 @@ def groups(request):
     start_date, end_date = date_parameters_dictionary(request)
     list_of_data = [[] for i in range(3)]
     if start_date != '0' or end_date != '0':
-        groups_data = Account.objects.filter(start_date__gte=start_date, start_date__lte=end_date).order_by('start_date')
+        groups_data = Account.objects.filter(start_date__gte=start_date, start_date__lte=end_date).order_by(
+            'start_date')
         # print(groups_data)
         for group in groups_data:
             list_of_data[0].append(group.name)
@@ -142,20 +144,22 @@ def groups(request):
 def facility_usage(request):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
-        facility_data = UsageEvent.objects.only("project", "start", "end").select_related('project'). \
-            filter(end__gt=start_date, end__lte=end_date)
+        facility_data = UsageEvent.objects.only("project", "start", "end").select_related('project').filter(
+            end__gt=start_date, end__lte=end_date)
         project_list = UsageEvent.objects.only("project", "start", "end").select_related('project'). \
             filter(end__gt=start_date, end__lte=end_date).values_list('project')
         project_data = ProjectBillingDetails.objects.only("project", "category").select_related('category').filter(
             project__in=project_list)
         d = {}
+        d_category = {}
         category = []
         # print(project_list)
         for project in project_data:
+            d_category[project] = project.category
             category.append(project.category)
         category_output = collections.Counter(category).most_common()
         total = sum(j for i, j in category_output)
-        # print(category_output)
+        print(d_category)
 
         for facility in facility_data:
             start = facility.start
@@ -165,11 +169,16 @@ def facility_usage(request):
                     d[facility.project] = end - start
                 else:
                     d[facility.project] += end - start
-                    # dict_type[facility.invoice.project_details.category]
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
-        print(new_d)
-        return render(request, "reports/facility_usage.html", {'context': new_d, 'category': category_output,
+        # print(new_d)
+        df1 = pd.DataFrame(d.items(), columns=['project', 'time'])
+        df1['project'] = df1['project'].astype(str)
+        df2 = pd.DataFrame(d_category.items(), columns=['project', 'category'])
+        df2['project'] = df2['project'].astype(str)
+        left_join = pd.merge(df1, df2, on='project', how='left')
+        all_join = left_join.to_dict('records')
+        return render(request, "reports/facility_usage.html", {'context': all_join, 'category': category_output,
                                                                'total': total, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/facility_usage.html", {'start': start_date, 'end': end_date})

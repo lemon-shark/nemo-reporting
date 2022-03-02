@@ -39,14 +39,16 @@
 			<div class="column">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <tbody>
-			  <tr>
+			  	<tr>
 				  <th style="font-size:15px">Project</th>
 				  <th style="font-size:15px">Billable Time (hhh:mm:ss)</th>
+				  <th style="font-size:15px">Category</th>
 				</tr>
-			  {% for key, value in context.items %}
-				<tr>
-					 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
-					 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
+			  {% for entry in context %}
+			  	<tr>
+					{% for k, v in entry.items %}
+					<td style="border-bottom: 1px solid lightgray">{{v}}</td>
+					{% endfor %}
 				</tr>
 			  {% endfor %}
 			  </tbody>
