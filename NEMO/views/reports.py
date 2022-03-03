@@ -186,9 +186,9 @@ def facility_usage(request):
 
 def invoices(request):
     start_date, end_date = date_parameters_dictionary(request)
-    list_of_data = [[] for i in range(2)]
+    list_of_data = [[] for i in range(3)]
     if start_date != '0' or end_date != '0':
-        invoice_data = Invoice.objects.only("id", "created_date").filter(
+        invoice_data = Invoice.objects.only("id", "created_date", "project_details").filter(
             created_date__gt=start_date, created_date__lte=end_date).order_by("created_date")
         invoice_list = Invoice.objects.only("total_amount", "created_date").filter(
             created_date__gt=start_date, created_date__lte=end_date).values_list('id')
@@ -197,34 +197,30 @@ def invoices(request):
 
         for each in invoice_data:
             list_of_data[0].append(str(each.created_date.strftime("%b")) + "-" + str(each.created_date.year))
-            list_of_data[1].append(float(each.id))
+            list_of_data[1].append(int(each.id))
+            list_of_data[2].append(str(each.project_details.category))
+        # print(list_of_data)
         list_transpose = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
-        df1 = pd.DataFrame(list_transpose, columns=['Period', 'Invoice'])
-        df1['Invoice'] = df1['Invoice'].astype(int)
+        # print(list_transpose)
+        df1 = pd.DataFrame(list_transpose, columns=['Period', 'Invoice', 'Project'])
         print(df1)
 
         list_of_summarydata = [[] for i in range(3)]
         for invoicesummary in invoicesummary_data:
             list_of_summarydata[0].append(invoicesummary.core_facility)
-            list_of_summarydata[1].append(invoicesummary.invoice_id)
+            list_of_summarydata[1].append(int(invoicesummary.invoice_id))
             list_of_summarydata[2].append(invoicesummary.amount)
         list_summary_transpose = list(map(list, itertools.zip_longest(*list_of_summarydata, fillvalue=None)))
-        d_summary = collections.defaultdict(list)
         df2 = pd.DataFrame(list_summary_transpose, columns=['Facility', 'Invoice', 'Amount'])
-        df2['Invoice'] = df2['Invoice'].astype(int)
         print(df2)
         left_join = pd.merge(df1, df2, on='Invoice', how='left')
         print(left_join)
         left_join = left_join.drop('Invoice', 1)
-        row_sum = left_join.groupby(['Period', 'Facility']).agg('sum')
+        row_sum = left_join.groupby(['Period', 'Project', 'Facility']).agg('sum')
         result = row_sum.reset_index()
         print(result)
         joined = result.to_dict('records')
-        print(joined)
-        for entry in joined:
-            for k, v in entry.items():
-                print(v)
-
+        # print(joined)
         return render(request, "reports/invoices.html",
                       {'context': joined, 'start': start_date, 'end': end_date})
     else:
