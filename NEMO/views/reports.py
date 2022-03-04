@@ -172,7 +172,7 @@ def facility_usage(request):
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
         # print(new_d)
-        df1 = pd.DataFrame(d.items(), columns=['project', 'time'])
+        df1 = pd.DataFrame(new_d.items(), columns=['project', 'time'])
         df1['project'] = df1['project'].astype(str)
         df2 = pd.DataFrame(d_category.items(), columns=['project', 'category'])
         df2['project'] = df2['project'].astype(str)
