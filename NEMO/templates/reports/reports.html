@@ -18,13 +18,14 @@
 					<div class="col-sm-10 no-padding-sides">
 						<select id="report_type" name="report_type" class="form-control">
 							<option value="">Select type</option>
-							<option value="tool">Tool Usage</option>
-							<option value="facility">Facility Usage</option>
 							<option value="active_user">Active Users</option>
-							<option value="cumulative_user">Cumulative Users</option>
-							<option value="invoices">Invoices</option>
-							<option value="groups">Group Breakdown</option>
 							<option value="aging">Aging Schedule</option>
+							<option value="area">Area Usage</option>
+							<option value="cumulative_user">Cumulative Users</option>
+							<option value="facility">Facility Usage</option>
+							<option value="groups">Group Breakdown</option>
+							<option value="invoices">Invoices</option>
+							<option value="tool">Tool Usage</option>
 						</select>
 					</div>
 					<div class="col-sm-2 text-center">
@@ -50,7 +51,10 @@
 			 	 $("#report_select_form").attr("action","invoices/");
 			 } else if ($("#report_type").val() == 'aging') {
 			 	 $("#report_select_form").attr("action","aging-schedule/");
+			 } else if ($("#report_type").val() == 'area') {
+			 	 $("#report_select_form").attr("action","area-events/");
 			 }
+
 			document.getElementById('report_select_form').submit();
 		});
 	</script>

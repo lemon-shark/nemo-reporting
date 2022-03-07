@@ -326,7 +326,8 @@ urlpatterns += [
     url(r'^reports/groups/$', reports.groups, name='groups'),
     url(r'^reports/facility-usage/$', reports.facility_usage, name='facility_usage'),
     url(r'^reports/invoices/$', reports.invoices, name='invoices'),
-    url(r'^reports/aging-schedule/$', reports.aging_schedule, name='aging-schedule')
+    url(r'^reports/aging-schedule/$', reports.aging_schedule, name='aging_schedule'),
+    url(r'^reports/area-events/$', reports.area_events, name='area_events')
 ]
 
 

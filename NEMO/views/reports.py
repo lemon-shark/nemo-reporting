@@ -2,12 +2,13 @@ import collections
 import itertools
 from typing import io
 import pandas as pd
+from datetime import date
 
 from NEMO_billing.invoices.models import ProjectBillingDetails
 from allauth.socialaccount.providers.mediawiki.provider import settings
 from django.forms import DecimalField
 from dateutil import parser
-from NEMO.models import UsageEvent, User
+from NEMO.models import UsageEvent, User, AreaAccessRecord
 
 import io
 import zipfile
@@ -105,6 +106,42 @@ def usage_events(request):
         return render(request, "reports/usage_events.html", {'start': start_date, 'end': end_date})
 
 
+def area_events(request):
+    start_date, end_date = date_parameters_dictionary(request)
+    # page = request.GET.get('page', 1)
+    if start_date != '0' or end_date != '0':
+        area_data = AreaAccessRecord.objects.only("area", "start", "end").select_related('area').filter(end__gt=start_date,
+                                                                                                  end__lte=end_date)
+        d = {}
+        print(start_date)
+        print(end_date)
+        for area in area_data:
+            start = area.start
+            if area.end:
+                end = area.end
+                if area.area not in d:
+                    d[area.area] = end - start
+                else:
+                    d[area.area] += end - start
+        keys_values = d.items()
+        new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
+        print(new_d)
+        # paginator = Paginator(tuple(new_d.items()), 25)
+        # try:
+        #     tools = paginator.page(page)
+        #     print(page)
+        # except PageNotAnInteger:
+        #     tools = paginator.page(1)
+        # except EmptyPage:
+        #     # if we exceed the page limit we return the last page
+        #     tools = paginator.page(paginator.num_pages)
+        #     print(paginator.num_pages)
+        return render(request, "reports/area_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
+    else:
+        return render(request, "reports/area_events.html", {'start': start_date, 'end': end_date})
+
+
+
 def active_users(request):
     start_date, end_date = date_parameters_dictionary(request)
     if start_date != '0' or end_date != '0':
@@ -137,11 +174,8 @@ def cumulative_users(request):
             list_of_data[0].append(user.first_name)
             list_of_data[1].append(user.last_name)
             list_of_data[2].append(user.type)
-            print(user.date_joined)
             list_of_data[3].append(str(user.date_joined)[0:10])
-        print(list_of_data)
         list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
-        print(list_output)
         return render(request, "reports/cumulative_users.html",
                       {'context': list_output, 'start': start_date, 'end': end_date})
     else:
@@ -180,12 +214,13 @@ def facility_usage(request):
             end__gt=start_date, end__lte=end_date)
         project_list = UsageEvent.objects.only("project", "start", "end").select_related('project'). \
             filter(end__gt=start_date, end__lte=end_date).values_list('project')
-        project_data = ProjectBillingDetails.objects.only("project", "category").select_related('category').filter(
+        project_data = ProjectBillingDetails.objects.only("project", "category", "no_charge").select_related('category').filter(
             project__in=project_list)
+            # .exclude(no_tax=True)
         d = {}
         d_category = {}
         category = []
-        # print(project_list)
+        print(project_data)
         for project in project_data:
             d_category[project] = project.category
             category.append(project.category)
@@ -286,200 +321,66 @@ def aging_schedule(request):
         invoice_list = (
             Invoice.objects.filter(voided_date=None)
                 .annotate(outstanding=F("total_amount") - Coalesce(Sum("invoicepayment__amount"), 0))
-                .annotate(
-                total_tax=Sum(
-                    Case(
-                        When(
-                            invoicesummaryitem__summary_item_type=InvoiceSummaryItem.InvoiceSummaryItemType.TAX,
-                            then=F("invoicesummaryitem__amount"),
-                        ),
-                        output_field=DecimalField(),
-                        default=0,
-                    )
-                )
-            )
         )
 
-        page = SortedPaginator(invoice_list, request, order_by="-created_date").get_current_page()
+        start_date, end_date = date_parameters_dictionary(request)
+        list_of_data = [[] for i in range(5)]
+        if start_date != '0' or end_date != '0':
+            invoice_data = Invoice.objects.only("invoice_number", "created_date", "reviewed_date", "total_amount", "due_date").filter(
+                created_date__gt=start_date, created_date__lte=end_date)
+            d = {}
+            print(start_date)
+            print(end_date)
+            for each in invoice_data:
+                list_of_data[0].append(each.invoice_number)
+                list_of_data[1].append(str(each.created_date)[0:19])
+                list_of_data[2].append(str(each.reviewed_date)[0:19])
+                list_of_data[3].append("${:,.2f}".format(each.total_amount))
+                list_of_data[4].append((datetime.utcnow().date() - each.due_date).days)
 
-        core_facilities = CoreFacility.objects.all()
+            list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+            print(list_output)
 
-        return render(
-            request,
-            "reports/aging_schedule.html",
-            {
-                "page": page,
-                "month_list": month_list(since=settings.INVOICE_MONTH_LIST_SINCE),
-                "projects": Project.objects.all().order_by("account__name"),
-                "configuration_list": InvoiceConfiguration.objects.all(),
-                "invoices_search": Invoice.objects.all(),
-                "core_facilities": core_facilities,
-                "display_general_facility": not core_facilities.exists()
-                                            or not settings.INVOICE_ALL_ITEMS_MUST_BE_IN_FACILITY,
-            },
-        )
-
-
-@synchronized()
-def generate_monthly_invoices(request):
-        try:
-            project_id: str = request.POST["project_id"]
-            configuration_id = request.POST["configuration_id"]
-            configuration = get_object_or_404(InvoiceConfiguration, id=configuration_id)
-            if project_id == "All":
-                for project in Project.objects.all():
-                    generate_monthly_invoice(request.POST["month"], project, configuration, request.user)
-            elif project_id.startswith("account:"):
-                account: Account = get_object_or_404(Account, id=project_id.replace("account:", ""))
-                for project in account.project_set.all():
-                    generate_monthly_invoice(request.POST["month"], project, configuration, request.user)
-            else:
-                project = get_object_or_404(Project, id=project_id)
-                invoice = generate_monthly_invoice(request.POST["month"], project, configuration, request.user, True)
-                if not invoice:
-                    messages.warning(request, f"No billable items were found for project: {project}")
-        except NoProjectDetailsSetException as e:
-            link = reverse("project", args=[e.project.id])
-            message = "Invoice generation failed: " + e.msg + f" - click <a href='{link}'>here</a> to add some."
-            messages.error(request, mark_safe(message))
-        except NoRateSetException as e:
-            link = reverse("rates")
-            message = "Invoice generation failed: " + e.msg + f" - click <a href='{link}'>here</a> to create one."
-            messages.error(request, mark_safe(message))
-        except InvoiceAlreadyExistException as e:
-            link = reverse("view_invoice", args=[e.invoice.id])
-            message = "Invoice generation failed: " + e.msg + f" - click <a href='{link}'>here</a> to view it."
-            messages.error(request, mark_safe(message))
-        except NoProjectCategorySetException as e:
-            link = reverse("project", args=[e.project.id])
-            message = "Invoice generation failed: " + e.msg + f" - click <a href='{link}'>here</a> to set it."
-            messages.error(request, mark_safe(message))
-        except InvoiceItemsNotInFacilityException as e:
-            messages.error(request, e.msg)
-        return redirect("invoices")
-
-
-def view_invoice(request, invoice_id):
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        return render(
-            request, "invoices/invoice.html", {"invoice": invoice, "core_facilities": CoreFacility.objects.exists()}
-        )
-
-
-def review_invoice(request, invoice_id):
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        if not invoice.reviewed_date:
-            invoice.reviewed_date = timezone.now()
-            invoice.reviewed_by = request.user
-            invoice.save()
-            messages.success(request, f"Invoice {invoice.invoice_number} was successfully marked as reviewed.")
+            return render(request, "reports/aging_schedule.html",
+                          {'context': list_output, 'start': start_date, 'end': end_date})
         else:
-            messages.error(request, f"Invoice {invoice.invoice_number} has already been reviewed.")
-        return redirect("view_invoice", invoice_id=invoice_id)
+            return render(request, "reports/aging_schedule.html", {'start': start_date, 'end': end_date})
 
 
-def send_invoice(request, invoice_id):
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        if invoice.reviewed_date:
-            if not invoice.project_details.email_to():
-                link = reverse("project", args=[invoice.project_details.project.id])
-                messages.error(
-                    request,
-                    mark_safe(
-                        f"Invoice {invoice.invoice_number} could not sent because no email is set on the project - click <a href='{link}'>here</a> to add some"
-                    ),
-                )
-            else:
-                sent = invoice.send()
-                if sent:
-                    messages.success(request, f"Invoice {invoice.invoice_number} was successfully sent.")
-                else:
-                    messages.error(request, f"Invoice {invoice.invoice_number} could not be sent.")
-        else:
-            messages.error(request, f"Invoice {invoice.invoice_number} needs to be reviewed before sending.")
-        return redirect("view_invoice", invoice_id=invoice_id)
+# def area_events(request):
+#     start_date, end_date = date_parameters_dictionary(request)
+#     # page = request.GET.get('page', 1)
+#     if start_date != '0' or end_date != '0':
+#         tool_data = .objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date,
+#                                                                                                   end__lte=end_date).order_by(
+#             'tool')
+#         d = {}
+#         print(start_date)
+#         print(end_date)
+#         for tool in tool_data:
+#             start = tool.start
+#             if tool.end:
+#                 end = tool.end
+#                 if tool.tool not in d:
+#                     d[tool.tool] = end - start
+#                 else:
+#                     d[tool.tool] += end - start
+#         keys_values = d.items()
+#         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
+#         print(new_d)
+#         # paginator = Paginator(tuple(new_d.items()), 25)
+#         # try:
+#         #     tools = paginator.page(page)
+#         #     print(page)
+#         # except PageNotAnInteger:
+#         #     tools = paginator.page(1)
+#         # except EmptyPage:
+#         #     # if we exceed the page limit we return the last page
+#         #     tools = paginator.page(paginator.num_pages)
+#         #     print(paginator.num_pages)
+#         return render(request, "reports/usage_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
+#     else:
+#         return render(request, "reports/usage_events.html", {'start': start_date, 'end': end_date})
+#
 
 
-def void_invoice(request, invoice_id):
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        if not invoice.voided_date:
-            invoice.voided_date = timezone.now()
-            invoice.voided_by = request.user
-            invoice.save()
-            messages.success(request, f"Invoice {invoice.invoice_number} was successfully marked as void.")
-        else:
-            messages.error(request, f"Invoice {invoice.invoice_number} is already void.")
-        return redirect("view_invoice", invoice_id=invoice_id)
-
-
-def zip_invoices(request):
-        invoice_ids: List[str] = request.POST.getlist("selected_invoice_id[]")
-        if not invoice_ids:
-            return redirect("invoices")
-        else:
-            return zip_response(request, Invoice.objects.filter(id__in=invoice_ids))
-
-
-def invoice_payment_received(request, invoice_id):
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        payment = InvoicePayment()
-        payment.invoice = invoice
-        payment.created_by = request.user
-        payment.updated_by = request.user
-        payment.payment_received = datetime.strptime(request.POST["payment_received_date"], "%m/%d/%Y")
-        payment.amount = Decimal(request.POST["payment_received_amount"])
-        payment.note = request.POST.get("payment_note")
-        payment.save()
-        messages.success(
-            request,
-            f"The payment of {payment.amount_display()} for invoice {invoice.invoice_number} was marked as received on {date_format(payment.payment_received)}.",
-        )
-        return redirect("view_invoice", invoice_id=invoice_id)
-
-
-def invoice_payment_processed(request, payment_id):
-        payment = get_object_or_404(InvoicePayment, id=payment_id)
-        payment.updated_by = request.user
-        payment.payment_processed = datetime.strptime(request.POST["payment_processed_date"], "%m/%d/%Y")
-        payment.save()
-        messages.success(
-            request,
-            f"The payment of {payment.amount_display()} for invoice {payment.invoice.invoice_number} was marked as processed on {date_format(payment.payment_processed)}.",
-        )
-        return redirect("view_invoice", invoice_id=payment.invoice_id)
-
-
-def send_invoice_payment_reminder(request):
-        return do_send_invoice_payment_reminder()
-
-def do_send_invoice_payment_reminder():
-        today = timezone.now()
-        unpaid_invoices = Invoice.objects.filter(due_date__lte=today, voided_date=None)
-        for unpaid_invoice in unpaid_invoices:
-            if unpaid_invoice.total_outstanding_amount() > Decimal(0):
-                if not unpaid_invoice.last_reminder_sent_date:
-                    unpaid_invoice.send_reminder()
-                else:
-                    # Check days since last reminder sent
-                    time_diff = today - unpaid_invoice.last_reminder_sent_date
-                    too_long_since_last = (
-                            unpaid_invoice.configuration.reminder_frequency
-                            and time_diff.days >= unpaid_invoice.configuration.reminder_frequency
-                    )
-                    # Send reminder if none has been sent yet, or if it's been too long
-                    if too_long_since_last:
-                        unpaid_invoice.send_reminder()
-        return HttpResponse()
-
-def zip_response(request, invoice_list: List[Invoice]):
-        generated_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        parent_folder_name = f"invoices_{generated_date}"
-        zip_io = io.BytesIO()
-        with zipfile.ZipFile(zip_io, mode="w", compression=zipfile.ZIP_DEFLATED) as backup_zip:
-            for invoice in invoice_list:
-                if invoice.file:
-                    backup_zip.write(invoice.file.path, f"{parent_folder_name}/" + invoice.filename_for_zip())
-        response = HttpResponse(zip_io.getvalue(), content_type="application/x-zip-compressed")
-        response["Content-Disposition"] = "attachment; filename=%s" % parent_folder_name + ".zip"
-        response["Content-Length"] = zip_io.tell()
-        return response

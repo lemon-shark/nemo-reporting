@@ -7,7 +7,7 @@
 {% endblock %}
 {% block title %}Reports{% endblock %}
 {% block content %}
-<h1 style="margin-bottom: 25px">Aging Schedule Report</h1>
+<h1 style="margin-bottom: 25px">Area Usage Report</h1>
 <form id="date-form" method="POST">
 	{% csrf_token %}
 	<div class="control-label col-sm-2">
@@ -38,19 +38,15 @@
 		<table border="1" class="table table-bordered" style="margin-top: 3%">
 		  <tbody>
 		  <tr>
-			    <th style="font-size:15px">&nbspInvoice&nbsp</th>
-				<th style="font-size:15px">&nbspCreated&nbsp</th>
-				<th style="font-size:15px">&nbspReviewed&nbsp</th>
-				<th style="font-size:15px">&nbspAmount&nbsp</th>
-				<th style="font-size:15px">&nbspOverdue Days&nbsp</th>
+			  <th style="font-size:16px">Area</th>
+			  <th style="font-size:16px">Time (hhh:mm:ss)</th>
+		  </tr>
+		  {% for key, value in context.items %}
+			<tr>
+				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
+				 <td style="border-bottom: 1px solid lightgray">{{value}}</td>
 			</tr>
-				{% for list in context %}
-					<tr>
-					{% for data in list %}
-						<td style="border-bottom: 1px solid lightgray">&nbsp{{data}}&nbsp</td>
-					{% endfor %}
-					</tr>
-				{% endfor %}
+		  {% endfor %}
 		  </tbody>
 		</table>
 <!--		{% if context.has_other_pages %}-->
@@ -75,7 +71,7 @@
 <!--		  </ul>-->
 <!--		{% endif %}-->
 		{% else %}
-			No access records exist between your input time.
+			No area records exist between your input time.
 		{% endif %}
 	{% endif %}
   </div>
