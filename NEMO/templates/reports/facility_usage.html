@@ -40,9 +40,9 @@
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <tbody>
 			  	<tr>
-				  <th style="font-size:16px">Project</th>
-				  <th style="font-size:16px">Billable Time (hhh:mm:ss)</th>
-				  <th style="font-size:16px">Category</th>
+				  <th style="font-size:15px">Project</th>
+				  <th style="font-size:15px">Time (hhh:mm:ss)</th>
+				  <th style="font-size:15px">Category</th>
 				</tr>
 			  {% for entry in context %}
 			  	<tr>
@@ -57,16 +57,17 @@
 			<div class="column2">
 			<table border="1" class="table table-bordered" style="margin-top: 3%">
 			  <tbody>
-			  		{% for k, v in category %}
-						<tr>
-							<th style="font-size:15px">&nbsp{{k}}&nbsp</th>
-							<td style="border-bottom: 1px solid lightgray">&nbsp{{v}}&nbsp</td>
-						</tr>
+			  		<tr>
+				  <th style="font-size:15px">Category</th>
+				  <th style="font-size:15px">Time (hhh:mm:ss)</th>
+				</tr>
+			  {% for entry in category %}
+			  	<tr>
+					{% for k, v in entry.items %}
+					<td style="border-bottom: 1px solid lightgray">{{v}}</td>
 					{% endfor %}
-			  		  <tr>
-						  <th style="font-size:15px">&nbspTotal&nbsp</th>
-						  <td style="border-bottom: 1px solid lightgray">&nbsp{{total}}&nbsp</td>
-					  </tr>
+				</tr>
+			  {% endfor %}
 			  </tbody>
 			</table>
 		  </div>
@@ -187,14 +188,14 @@
 
 		.column1 {
 		  float: left;
-		  width: 70%;
+		  width: 60%;
 		  padding: 5px;
 		}
 
 		.column2 {
 		  float: left;
-		  width: 30%;
-		  padding: 17px;
+		  width: 40%;
+		  padding: 11px;
 		}
 
 		/* Clearfix (clear floats) */
