@@ -41,16 +41,16 @@
 			    <th style="font-size:15px">&nbspInvoice&nbsp</th>
 				<th style="font-size:15px">&nbspCreated&nbsp</th>
 				<th style="font-size:15px">&nbspReviewed&nbsp</th>
+			    <th style="font-size:15px">&nbspOverdue Days&nbsp</th>
 				<th style="font-size:15px">&nbspAmount&nbsp</th>
-				<th style="font-size:15px">&nbspOverdue Days&nbsp</th>
 			</tr>
-				{% for list in context %}
+				{% for entry in context %}
 					<tr>
-					{% for data in list %}
-						<td style="border-bottom: 1px solid lightgray">&nbsp{{data}}&nbsp</td>
-					{% endfor %}
+						{% for k, v in entry.items %}
+						<td style="border-bottom: 1px solid lightgray">{{v}}</td>
+						{% endfor %}
 					</tr>
-				{% endfor %}
+				  {% endfor %}
 		  </tbody>
 		</table>
 <!--		{% if context.has_other_pages %}-->

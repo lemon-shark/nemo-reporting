@@ -325,62 +325,46 @@ def aging_schedule(request):
 
         start_date, end_date = date_parameters_dictionary(request)
         list_of_data = [[] for i in range(5)]
+        list_of_paid = [[] for i in range(2)]
         if start_date != '0' or end_date != '0':
             invoice_data = Invoice.objects.only("invoice_number", "created_date", "reviewed_date", "total_amount", "due_date").filter(
                 created_date__gt=start_date, created_date__lte=end_date)
-            d = {}
-            print(start_date)
-            print(end_date)
+            invoice_list = Invoice.objects.only("id", "created_date").filter(
+                created_date__gt=start_date, created_date__lte=end_date).values_list('id')
+            print(invoice_list)
+            invoicepayment_data = InvoicePayment.objects.only("invoice", "amount").filter(
+                invoice_id__in=invoice_list).select_related('invoice')
+            print(invoicepayment_data)
+            # print(start_date)
+            # print(end_date)
             for each in invoice_data:
-                list_of_data[0].append(each.invoice_number)
+                list_of_data[0].append(str(each.invoice_number))
                 list_of_data[1].append(str(each.created_date)[0:19])
                 list_of_data[2].append(str(each.reviewed_date)[0:19])
-                list_of_data[3].append("${:,.2f}".format(each.total_amount))
+                list_of_data[3].append(float(each.total_amount))
                 list_of_data[4].append((datetime.utcnow().date() - each.due_date).days)
 
-            list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
-            print(list_output)
+            for paid in invoicepayment_data:
+                list_of_paid[0].append(str(paid.invoice.invoice_number))
+                list_of_paid[1].append(float(paid.amount))
 
+            list_totalamount = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+            list_paid = list(map(list, itertools.zip_longest(*list_of_paid, fillvalue=None)))
+            # print(list_totalamount)
+            # print(list_paid)
+            df1 = pd.DataFrame(list_totalamount, columns=['Invoice', 'Created', 'Reviewed', 'totalamount', 'Overdue'])
+            df2 = pd.DataFrame(list_paid, columns=['Invoice', 'amount'])
+            left_join = pd.merge(df1, df2, on='Invoice', how='left')
+            left_join['amount'] = left_join['amount'].fillna(0)
+            left_join['Outstanding'] = left_join['totalamount'] - left_join['amount']
+            # print(left_join)
+            joined = left_join.drop('totalamount', 1)
+            joined_data = joined.drop('amount', 1)
+            joined_data.loc[(joined_data != 0.0).any(1)]
+            joined_data['Outstanding'] = joined_data['Outstanding'].apply(lambda x: "${:,.2f}".format(x))
+            output = joined_data.to_dict('records')
+            print(output)
             return render(request, "reports/aging_schedule.html",
-                          {'context': list_output, 'start': start_date, 'end': end_date})
+                          {'context': output, 'start': start_date, 'end': end_date})
         else:
             return render(request, "reports/aging_schedule.html", {'start': start_date, 'end': end_date})
-
-
-# def area_events(request):
-#     start_date, end_date = date_parameters_dictionary(request)
-#     # page = request.GET.get('page', 1)
-#     if start_date != '0' or end_date != '0':
-#         tool_data = .objects.only("tool", "start", "end").select_related('tool').filter(end__gt=start_date,
-#                                                                                                   end__lte=end_date).order_by(
-#             'tool')
-#         d = {}
-#         print(start_date)
-#         print(end_date)
-#         for tool in tool_data:
-#             start = tool.start
-#             if tool.end:
-#                 end = tool.end
-#                 if tool.tool not in d:
-#                     d[tool.tool] = end - start
-#                 else:
-#                     d[tool.tool] += end - start
-#         keys_values = d.items()
-#         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
-#         print(new_d)
-#         # paginator = Paginator(tuple(new_d.items()), 25)
-#         # try:
-#         #     tools = paginator.page(page)
-#         #     print(page)
-#         # except PageNotAnInteger:
-#         #     tools = paginator.page(1)
-#         # except EmptyPage:
-#         #     # if we exceed the page limit we return the last page
-#         #     tools = paginator.page(paginator.num_pages)
-#         #     print(paginator.num_pages)
-#         return render(request, "reports/usage_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
-#     else:
-#         return render(request, "reports/usage_events.html", {'start': start_date, 'end': end_date})
-#
-
-
