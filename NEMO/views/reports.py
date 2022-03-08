@@ -110,8 +110,9 @@ def area_events(request):
     start_date, end_date = date_parameters_dictionary(request)
     # page = request.GET.get('page', 1)
     if start_date != '0' or end_date != '0':
-        area_data = AreaAccessRecord.objects.only("area", "start", "end").select_related('area').filter(end__gt=start_date,
-                                                                                                  end__lte=end_date)
+        area_data = AreaAccessRecord.objects.only("area", "start", "end").select_related('area').filter(
+            end__gt=start_date,
+            end__lte=end_date)
         d = {}
         print(start_date)
         print(end_date)
@@ -139,7 +140,6 @@ def area_events(request):
         return render(request, "reports/area_events.html", {'context': new_d, 'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/area_events.html", {'start': start_date, 'end': end_date})
-
 
 
 def active_users(request):
@@ -214,9 +214,10 @@ def facility_usage(request):
             end__gt=start_date, end__lte=end_date)
         project_list = UsageEvent.objects.only("project", "start", "end").select_related('project'). \
             filter(end__gt=start_date, end__lte=end_date).values_list('project')
-        project_data = ProjectBillingDetails.objects.only("project", "category", "no_charge").select_related('category').filter(
+        project_data = ProjectBillingDetails.objects.only("project", "category", "no_charge").select_related(
+            'category').filter(
             project__in=project_list)
-            # .exclude(no_tax=True)
+        # .exclude(no_tax=True)
         d = {}
         d_category = {}
         category = []
@@ -267,7 +268,7 @@ def facility_usage(request):
         # category_output = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
 
         return render(request, "reports/facility_usage.html", {'context': all_join, 'category': category_dict,
-                                                                'start': start_date, 'end': end_date})
+                                                               'start': start_date, 'end': end_date})
     else:
         return render(request, "reports/facility_usage.html", {'start': start_date, 'end': end_date})
 
@@ -317,54 +318,49 @@ def invoices(request):
 
 
 def aging_schedule(request):
-        # Add outstanding balance and total tax that will be sortable columns
-        invoice_list = (
-            Invoice.objects.filter(voided_date=None)
-                .annotate(outstanding=F("total_amount") - Coalesce(Sum("invoicepayment__amount"), 0))
-        )
+    start_date, end_date = date_parameters_dictionary(request)
+    list_of_data = [[] for i in range(6)]
+    list_of_paid = [[] for i in range(2)]
+    if start_date != '0' or end_date != '0':
+        invoice_data = Invoice.objects.only("invoice_number", "created_date", "reviewed_date", "total_amount",
+                                            "due_date", "project_details").select_related('project_details').filter(
+            created_date__gt=start_date, created_date__lte=end_date)
+        invoice_list = Invoice.objects.only("id", "created_date").filter(
+            created_date__gt=start_date, created_date__lte=end_date).values_list('id')
+        print(invoice_list)
+        invoicepayment_data = InvoicePayment.objects.only("invoice", "amount").filter(
+            invoice_id__in=invoice_list).select_related('invoice')
+        print(invoicepayment_data)
+        # print(start_date)
+        # print(end_date)
+        for each in invoice_data:
+            list_of_data[0].append(str(each.invoice_number))
+            list_of_data[1].append(str(each.created_date)[0:19])
+            list_of_data[2].append(str(each.reviewed_date)[0:19])
+            list_of_data[3].append(float(each.total_amount))
+            list_of_data[4].append((datetime.utcnow().date() - each.due_date).days)
+            list_of_data[5].append(each.project_details.project)
 
-        start_date, end_date = date_parameters_dictionary(request)
-        list_of_data = [[] for i in range(5)]
-        list_of_paid = [[] for i in range(2)]
-        if start_date != '0' or end_date != '0':
-            invoice_data = Invoice.objects.only("invoice_number", "created_date", "reviewed_date", "total_amount", "due_date").filter(
-                created_date__gt=start_date, created_date__lte=end_date)
-            invoice_list = Invoice.objects.only("id", "created_date").filter(
-                created_date__gt=start_date, created_date__lte=end_date).values_list('id')
-            print(invoice_list)
-            invoicepayment_data = InvoicePayment.objects.only("invoice", "amount").filter(
-                invoice_id__in=invoice_list).select_related('invoice')
-            print(invoicepayment_data)
-            # print(start_date)
-            # print(end_date)
-            for each in invoice_data:
-                list_of_data[0].append(str(each.invoice_number))
-                list_of_data[1].append(str(each.created_date)[0:19])
-                list_of_data[2].append(str(each.reviewed_date)[0:19])
-                list_of_data[3].append(float(each.total_amount))
-                list_of_data[4].append((datetime.utcnow().date() - each.due_date).days)
+        for paid in invoicepayment_data:
+            list_of_paid[0].append(str(paid.invoice.invoice_number))
+            list_of_paid[1].append(float(paid.amount))
 
-            for paid in invoicepayment_data:
-                list_of_paid[0].append(str(paid.invoice.invoice_number))
-                list_of_paid[1].append(float(paid.amount))
-
-            list_totalamount = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
-            list_paid = list(map(list, itertools.zip_longest(*list_of_paid, fillvalue=None)))
-            # print(list_totalamount)
-            # print(list_paid)
-            df1 = pd.DataFrame(list_totalamount, columns=['Invoice', 'Created', 'Reviewed', 'totalamount', 'Overdue'])
-            df2 = pd.DataFrame(list_paid, columns=['Invoice', 'amount'])
-            left_join = pd.merge(df1, df2, on='Invoice', how='left')
-            left_join['amount'] = left_join['amount'].fillna(0)
-            left_join['Outstanding'] = left_join['totalamount'] - left_join['amount']
-            # print(left_join)
-            joined = left_join.drop('totalamount', 1)
-            joined_data = joined.drop('amount', 1)
-            joined_data.loc[(joined_data != 0.0).any(1)]
-            joined_data['Outstanding'] = joined_data['Outstanding'].apply(lambda x: "${:,.2f}".format(x))
-            output = joined_data.to_dict('records')
-            print(output)
-            return render(request, "reports/aging_schedule.html",
-                          {'context': output, 'start': start_date, 'end': end_date})
-        else:
-            return render(request, "reports/aging_schedule.html", {'start': start_date, 'end': end_date})
+        list_totalamount = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
+        list_paid = list(map(list, itertools.zip_longest(*list_of_paid, fillvalue=None)))
+        # print(list_totalamount)
+        # print(list_paid)
+        df1 = pd.DataFrame(list_totalamount, columns=['Invoice', 'Created', 'Reviewed', 'totalamount', 'Overdue', 'Project'])
+        df2 = pd.DataFrame(list_paid, columns=['Invoice', 'amount'])
+        left_join = pd.merge(df1, df2, on='Invoice', how='left')
+        left_join['amount'] = left_join['amount'].fillna(0)
+        left_join['Outstanding'] = left_join['totalamount'] - left_join['amount']
+        # print(left_join)
+        joined = left_join.drop('totalamount', 1)
+        joined_data = joined.drop('amount', 1)
+        joined_data['Outstanding'] = joined_data['Outstanding'].apply(lambda x: "${:,.2f}".format(x))
+        new_df = joined_data[joined_data.Outstanding != '$0.00']
+        output = new_df.to_dict('records')
+        return render(request, "reports/aging_schedule.html",
+                      {'context': output, 'start': start_date, 'end': end_date})
+    else:
+        return render(request, "reports/aging_schedule.html", {'start': start_date, 'end': end_date})
