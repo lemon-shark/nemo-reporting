@@ -165,16 +165,17 @@ def active_users(request):
 
 def cumulative_users(request):
     start_date, end_date = date_parameters_dictionary(request)
-    list_of_data = [[] for i in range(4)]
+    list_of_data = [[] for i in range(5)]
     if start_date != '0' or end_date != '0':
-        user_data = User.objects.only("first_name", "last_name", "type", "date_joined").filter(
+        user_data = User.objects.only("first_name", "last_name", "type", "date_joined", "username").filter(
             date_joined__gte=start_date, date_joined__lte=end_date).order_by("date_joined")
         print(user_data)
         for user in user_data:
             list_of_data[0].append(user.first_name)
             list_of_data[1].append(user.last_name)
-            list_of_data[2].append(user.type)
-            list_of_data[3].append(str(user.date_joined)[0:10])
+            list_of_data[2].append(user.username)
+            list_of_data[3].append(user.type)
+            list_of_data[4].append(str(user.date_joined)[0:10])
         list_output = list(map(list, itertools.zip_longest(*list_of_data, fillvalue=None)))
         return render(request, "reports/cumulative_users.html",
                       {'context': list_output, 'start': start_date, 'end': end_date})
@@ -217,17 +218,12 @@ def facility_usage(request):
         project_data = ProjectBillingDetails.objects.only("project", "category", "no_charge").select_related(
             'category').filter(
             project__in=project_list)
-        # .exclude(no_tax=True)
         d = {}
         d_category = {}
         category = []
-        print(project_data)
         for project in project_data:
             d_category[project] = project.category
             category.append(project.category)
-        category_output = collections.Counter(category).most_common()
-        total = sum(j for i, j in category_output)
-        # print(d_category)
 
         for facility in facility_data:
             start = facility.start
@@ -240,7 +236,6 @@ def facility_usage(request):
         keys_values = d.items()
         new_d = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
         datetime_d = {str(key): value for key, value in keys_values}
-        # print(new_d)
         df1 = pd.DataFrame(new_d.items(), columns=['project', 'time'])
         df1['project'] = df1['project'].astype(str)
         df2 = pd.DataFrame(d_category.items(), columns=['project', 'category'])
@@ -249,24 +244,14 @@ def facility_usage(request):
         df3['project'] = df3['project'].astype(str)
         left_join = pd.merge(df1, df2, on='project', how='left')
         datetime_left_join = pd.merge(df3, df2, on='project', how='left')
-        print(datetime_left_join)
         by_category = datetime_left_join.drop('project', 1)
-        # category_list = by_category.values.tolist()
-        # print(category_list)
         by_category = by_category.astype({"category": str})
-        # print(by_category)
         group_category = by_category.groupby('category')['time'].sum()
         category_output = group_category.reset_index()
         category_output['time'] = category_output['time'].apply(lambda x: str(convert_timedelta(x)))
-        print(category_output)
-
-        # print(category_output)
+        category_output['category'] = category_output['category'].replace('nan', 'Empty')
         all_join = left_join.to_dict('records')
         category_dict = category_output.to_dict('records')
-        # print(type(all_join))
-        # keys_values = category_dict.items()
-        # category_output = {str(key): str(convert_timedelta(value)) for key, value in keys_values}
-
         return render(request, "reports/facility_usage.html", {'context': all_join, 'category': category_dict,
                                                                'start': start_date, 'end': end_date})
     else:

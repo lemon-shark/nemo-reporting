@@ -34,13 +34,14 @@
 	{% if start != '0' %}
 		{% if context %}
 		<p>Cumulative users from {{start}} to {{end}}</p>
-		<table border="1" class="table table-bordered" style="margin-top: 3%">
+		<table border="1" class="table table-bordered" style="margin-top: 3%" id="myTable2">
 		  <tbody>
 		  	<tr>
-				<th style="font-size:16px">&nbspFirst Name&nbsp</th>
-				<th style="font-size:16px">&nbspLast Name&nbsp</th>
-				<th style="font-size:16px">&nbspType&nbsp</th>
-				<th style="font-size:16px">&nbspDate Joined (YYYY-MM-DD)&nbsp</th>
+				<th style="font-size:16px" onclick="sortTable(0)">&nbspFirst Name&nbsp</th>
+				<th style="font-size:16px" onclick="sortTable(1)">&nbspLast Name&nbsp</th>
+				<th style="font-size:16px" onclick="sortTable(2)">&nbspUsername&nbsp</th>
+				<th style="font-size:16px" onclick="sortTable(3)">&nbspType&nbsp</th>
+				<th style="font-size:16px" onclick="sortTable(4)">&nbspDate Joined (YYYY-MM-DD)&nbsp</th>
 			</tr>
 				{% for list in context %}
 					<tr>
@@ -71,6 +72,88 @@
 	$("#date-search").click(function() {
 		$("#data-form").attr("action", "cumulative-users/");
 	});
+
+	function on_load()
+		{
+			var timepicker_properties =
+			{
+				format: 'MM/DD/YYYY'
+			};
+			$('#start_time').datetimepicker(timepicker_properties);
+			$('#end_time').datetimepicker(timepicker_properties);
+		}
+		$(on_load);
+
+	$("#date-search").click(function() {
+		setTimeout(function () { $("#date-search").prop('disabled', true); }, 0);
+		$("#data-form").attr("action", "usage-events/");
+	});
+
+	$('body').append('<div style="" id="loadingDiv"><div class="loader">Loading...</div></div>');
+	$(window).on('load', function(){
+	  setTimeout(removeLoader, 0); //wait for page load PLUS two seconds.
+	});
+	function removeLoader() {
+		$("#loadingDiv").fadeOut(500, function () {
+			// fadeOut complete. Remove the loading div
+			$("#loadingDiv").remove(); //makes page more lightweight
+		});
+	}
+
+	function sortTable(n) {
+	  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+	  table = document.getElementById("myTable2");
+	  switching = true;
+	  // Set the sorting direction to ascending:
+	  dir = "asc";
+	  /* Make a loop that will continue until
+	  no switching has been done: */
+	  while (switching) {
+		// Start by saying: no switching is done:
+		switching = false;
+		rows = table.rows;
+		/* Loop through all table rows (except the
+		first, which contains table headers): */
+		for (i = 1; i < (rows.length - 1); i++) {
+		  // Start by saying there should be no switching:
+		  shouldSwitch = false;
+		  /* Get the two elements you want to compare,
+		  one from current row and one from the next: */
+		  x = rows[i].getElementsByTagName("TD")[n];
+		  y = rows[i + 1].getElementsByTagName("TD")[n];
+		  /* Check if the two rows should switch place,
+		  based on the direction, asc or desc: */
+		  if (dir == "asc") {
+			if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+			  // If so, mark as a switch and break the loop:
+			  shouldSwitch = true;
+			  break;
+			}
+		  } else if (dir == "desc") {
+			if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+			  // If so, mark as a switch and break the loop:
+			  shouldSwitch = true;
+			  break;
+			}
+		  }
+		}
+		if (shouldSwitch) {
+		  /* If a switch has been marked, make the switch
+		  and mark that a switch has been done: */
+		  rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+		  switching = true;
+		  // Each time a switch is done, increase this count by 1:
+		  switchcount ++;
+		} else {
+		  /* If no switching has been done AND the direction is "asc",
+		  set the direction to "desc" and run the while loop again. */
+		  if (switchcount == 0 && dir == "asc") {
+			dir = "desc";
+			switching = true;
+		  }
+		}
+	  }
+	}
 </script>
 <style>
 	table {
