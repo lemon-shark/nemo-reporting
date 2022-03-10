@@ -52,7 +52,7 @@ def convert_timedelta(duration):
     hours = days * 24 + seconds // 3600
     minutes = (seconds % 3600) // 60
     seconds = (seconds % 60)
-    return '{}:{}:{}'.format(hours, minutes, seconds)
+    return '{}:{:02d}:{:02d}'.format(hours, minutes, seconds)
 
 
 def parse_start_end_date(start, end):
@@ -344,7 +344,9 @@ def aging_schedule(request):
         joined_data = joined.drop('amount', 1)
         joined_data['Outstanding'] = joined_data['Outstanding'].apply(lambda x: "${:,.2f}".format(x))
         new_df = joined_data[joined_data.Outstanding != '$0.00']
+        # new_df['Overdue'] = pd.to_numeric(new_df['Overdue'])
         output = new_df.to_dict('records')
+        print(type(output[0]['Overdue']))
         return render(request, "reports/aging_schedule.html",
                       {'context': output, 'start': start_date, 'end': end_date})
     else:
