@@ -35,12 +35,14 @@
 	{% if start != '0' %}
 		{% if context %}
 		<p>Tool usage events from {{start}} to {{end}}</p>
-		<table border="1" class="table table-bordered" style="margin-top: 3%" id="myTable2">
+		<table border="1" class="table table-bordered table-sortable" style="margin-top: 3%">
+			<thead>
+				<tr style="background-color: whitesmoke;">
+				  <th style="font-size:16px">Tools</th>
+				  <th style="font-size:16px">Time (hhh:mm:ss)</th>
+			    </tr>
+			</thead>
 		  <tbody>
-		  <tr>
-			  <th style="font-size:16px" onclick="sortTable(0)">Tools</th>
-			  <th style="font-size:16px" onclick="sortTable(1)">Time (hhh:mm:ss)</th>
-		  </tr>
 		  {% for key, value in context.items %}
 			<tr>
 				 <td style="border-bottom: 1px solid lightgray">{{key}}</td>
@@ -102,60 +104,59 @@
 			$("#loadingDiv").remove(); //makes page more lightweight
 		});
 	}
+	$('table.table-sortable th').on('click', function(e) {
+	  sortTableByColumn(this)
+	})
 
-	function sortTable(n) {
-	  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-	  table = document.getElementById("myTable2");
-	  switching = true;
-	  // Set the sorting direction to ascending:
-	  dir = "asc";
-	  /* Make a loop that will continue until
-	  no switching has been done: */
-	  while (switching) {
-		// Start by saying: no switching is done:
-		switching = false;
-		rows = table.rows;
-		/* Loop through all table rows (except the
-		first, which contains table headers): */
-		for (i = 1; i < (rows.length - 1); i++) {
-		  // Start by saying there should be no switching:
-		  shouldSwitch = false;
-		  /* Get the two elements you want to compare,
-		  one from current row and one from the next: */
-		  x = rows[i].getElementsByTagName("TD")[n];
-		  y = rows[i + 1].getElementsByTagName("TD")[n];
-		  /* Check if the two rows should switch place,
-		  based on the direction, asc or desc: */
-		  if (dir == "asc") {
-			if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-			  // If so, mark as a switch and break the loop:
-			  shouldSwitch = true;
-			  break;
-			}
-		  } else if (dir == "desc") {
-			if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-			  // If so, mark as a switch and break the loop:
-			  shouldSwitch = true;
-			  break;
-			}
-		  }
-		}
-		if (shouldSwitch) {
-		  /* If a switch has been marked, make the switch
-		  and mark that a switch has been done: */
-		  rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-		  switching = true;
-		  // Each time a switch is done, increase this count by 1:
-		  switchcount ++;
-		} else {
-		  /* If no switching has been done AND the direction is "asc",
-		  set the direction to "desc" and run the while loop again. */
-		  if (switchcount == 0 && dir == "asc") {
-			dir = "desc";
-			switching = true;
-		  }
-		}
+	function sortTableByColumn(tableHeader) {
+	  // extract all the relevant details
+	  let table = tableHeader.closest('table')
+	  let index = tableHeader.cellIndex
+	  let sortType = tableHeader.dataset.sortType
+	  let sortDirection = tableHeader.dataset.sortDir || 'asc' // default sort to ascending
+
+	  // sort the table rows
+	  let items = Array.prototype.slice.call(table.rows);
+	  let sortFunction = getSortFunction(sortType, index, sortDirection)
+	  let sorted = items.sort(sortFunction)
+
+	  // remove and re-add rows to table
+	  for (let row of sorted) {
+		let parent = row.parentNode
+		let detatchedItem = parent.removeChild(row)
+		parent.appendChild(row)
 	  }
+
+	  // reset heading values and styles
+	  for (let header of tableHeader.parentNode.children) {
+		header.classList.remove('currently-sorted')
+		delete header.dataset.sortDir
+	  }
+
+	  // update this headers's values and styles
+	  tableHeader.dataset.sortDir = sortDirection == 'asc' ? 'desc' : 'asc'
+	  tableHeader.classList.add('currently-sorted')
+	}
+
+	function getSortFunction(sortType, index, sortDirection) {
+	  let dir = sortDirection == 'asc' ? -1 : 1
+	  switch (sortType) {
+		case 'text': return stringRowComparer(index, dir);
+		case 'numeric': return numericRowComparer(index, dir);
+		default: return stringRowComparer(index, dir);
+	  }
+	}
+
+	// asc = alphanumeric order - eg 0->9->a->z
+	// desc = reverse alphanumeric order - eg z->a->9->0
+	function stringRowComparer(index, direction) {
+	  return (a, b) => -1 * direction * a.children[index].textContent.localeCompare(b.children[index].textContent)
+	}
+
+	// asc = higest to lowest - eg 999->0
+	// desc = lowest to highest - eg 0->999
+	function numericRowComparer(index, direction) {
+	  return (a, b) => direction * (Number(a.children[index].textContent) - Number(b.children[index].textContent))
 	}
 </script>
 <style>
@@ -221,8 +222,16 @@
 		  padding: 16px;
 		}
 
-		tr:nth-child(odd) {
+		tr:nth-child(even) {
 		  background-color: #f2f2f2;
+		}
+
+		table.table-sortable th.currently-sorted[data-sort-dir="asc"]::after {
+			content: "\25b2";
+		}
+
+		table.table-sortable th.currently-sorted[data-sort-dir="desc"]::after {
+			content: "\25bc";
 		}
 </style>
 {% endblock %}
