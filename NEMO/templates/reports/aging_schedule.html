@@ -96,6 +96,7 @@
 	  let table = tableHeader.closest('table')
 	  let index = tableHeader.cellIndex
 	  let sortType = tableHeader.dataset.sortType
+		console.log(tableHeader.dataset)
 		console.log(sortType)
 	  let sortDirection = tableHeader.dataset.sortDir || 'asc' // default sort to ascending
 
@@ -143,7 +144,8 @@
 	  return (a, b) => direction * (Number(a.children[index].textContent) - Number(b.children[index].textContent))
 	}
 
-		$(document).ready(function () {
+	// export function
+	$(document).ready(function () {
 
 		function exportTableToCSV($table, filename) {
 

@@ -1,46 +1,14 @@
 import collections
 import itertools
-from typing import io
 import pandas as pd
-from datetime import date
 
-from NEMO_billing.invoices.models import ProjectBillingDetails
-from allauth.socialaccount.providers.mediawiki.provider import settings
-from django.forms import DecimalField
+from NEMO_billing.invoices.models import ProjectBillingDetails, Invoice, InvoicePayment, InvoiceSummaryItem
 from dateutil import parser
-from NEMO.models import UsageEvent, User, AreaAccessRecord
+from NEMO.models import Account, UsageEvent, User, AreaAccessRecord
 
-import io
-import zipfile
 from datetime import datetime
-from decimal import Decimal
-from typing import List
-
-from NEMO.decorators import synchronized
-from NEMO.models import Account, Project
-from NEMO.utilities import month_list
-from NEMO.views.pagination import SortedPaginator
-from django.conf import settings
-from django.contrib import messages
-from django.db.models import Case, DecimalField, F, Sum, When
-from django.db.models.functions import Coalesce
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.shortcuts import render
 from django.utils import timezone
-from django.utils.formats import date_format
-from django.utils.safestring import mark_safe
-
-from NEMO_billing.invoices.exceptions import (
-    InvoiceAlreadyExistException,
-    InvoiceItemsNotInFacilityException,
-    NoProjectCategorySetException,
-    NoProjectDetailsSetException,
-    NoRateSetException,
-)
-from NEMO_billing.invoices.invoice_generator import generate_monthly_invoice
-from NEMO_billing.invoices.models import Invoice, InvoiceConfiguration, InvoicePayment, InvoiceSummaryItem
-from NEMO_billing.models import CoreFacility
 
 
 def reports(request):
