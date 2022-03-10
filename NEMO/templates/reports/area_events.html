@@ -27,15 +27,13 @@
 	</div>
 </form>
 
-<div id="export_button" class="col-sm-2 text-center" style="margin-top: 3%;display: none">
-		<button type="submit" class="btn btn-success">Export</button>
-</div>
 <div style="height: 5px; border-top: 1px dotted #eee"></div>
 <div id="data_table" style="margin-top: 8%;margin-left: 1.8%">
 	{% if start != '0' %}
 		{% if context %}
 		<p>Tool usage events from {{start}} to {{end}}</p>
-		<table border="1" class="table table-bordered" style="margin-top: 3%">
+		<a href="#" class="btn btn-info" id="export">Export</a>
+		<table border="1" class="table table-bordered" style="margin-top: 3%" id="projectSpreadsheet">
 		  <tbody>
 		  <tr>
 			  <th style="font-size:16px">Area</th>
@@ -102,6 +100,113 @@
 			$("#loadingDiv").remove(); //makes page more lightweight
 		});
 	}
+	function sortTableByColumn(tableHeader) {
+	  // extract all the relevant details
+	  let table = tableHeader.closest('table')
+	  let index = tableHeader.cellIndex
+	  let sortType = tableHeader.dataset.sortType
+		console.log(sortType)
+	  let sortDirection = tableHeader.dataset.sortDir || 'asc' // default sort to ascending
+
+	  // sort the table rows
+	  let items = Array.prototype.slice.call(table.rows);
+	  let sortFunction = getSortFunction(sortType, index, sortDirection)
+	  let sorted = items.sort(sortFunction)
+
+	  // remove and re-add rows to table
+	  for (let row of sorted) {
+		let parent = row.parentNode
+		let detatchedItem = parent.removeChild(row)
+		parent.appendChild(row)
+	  }
+
+	  // reset heading values and styles
+	  for (let header of tableHeader.parentNode.children) {
+		header.classList.remove('currently-sorted')
+		delete header.dataset.sortDir
+	  }
+
+	  // update this headers's values and styles
+	  tableHeader.dataset.sortDir = sortDirection == 'asc' ? 'desc' : 'asc'
+	  tableHeader.classList.add('currently-sorted')
+	}
+
+	function getSortFunction(sortType, index, sortDirection) {
+	  let dir = sortDirection == 'asc' ? -1 : 1
+	  switch (sortType) {
+		case 'text': return stringRowComparer(index, dir);
+		case 'numeric': return numericRowComparer(index, dir);
+		default: return stringRowComparer(index, dir);
+	  }
+	}
+
+	// asc = alphanumeric order - eg 0->9->a->z
+	// desc = reverse alphanumeric order - eg z->a->9->0
+	function stringRowComparer(index, direction) {
+	  return (a, b) => -1 * direction * a.children[index].textContent.localeCompare(b.children[index].textContent)
+	}
+
+	// asc = higest to lowest - eg 999->0
+	// desc = lowest to highest - eg 0->999
+	function numericRowComparer(index, direction) {
+	  return (a, b) => direction * (Number(a.children[index].textContent) - Number(b.children[index].textContent))
+	}
+
+	$(document).ready(function () {
+
+		function exportTableToCSV($table, filename) {
+
+			var $rows = $table.find('tr:has(td),tr:has(th)'),
+
+				// Temporary delimiter characters unlikely to be typed by keyboard
+				// This is to avoid accidentally splitting the actual contents
+				tmpColDelim = String.fromCharCode(11), // vertical tab character
+				tmpRowDelim = String.fromCharCode(0), // null character
+
+				// actual delimiter characters for CSV format
+				colDelim = '","',
+				rowDelim = '"\r\n"',
+
+				// Grab text from table into CSV formatted string
+				csv = '"' + $rows.map(function (i, row) {
+					var $row = $(row), $cols = $row.find('td,th');
+
+					return $cols.map(function (j, col) {
+						var $col = $(col), text = $col.text();
+
+						return text.replace(/"/g, '""'); // escape double quotes
+
+					}).get().join(tmpColDelim);
+
+				}).get().join(tmpRowDelim)
+					.split(tmpRowDelim).join(rowDelim)
+					.split(tmpColDelim).join(colDelim) + '"',
+
+
+
+				// Data URI
+				csvData = 'data:application/csv;charset=utf-8,' + encodeURIComponent(csv);
+
+				console.log(csv);
+
+				if (window.navigator.msSaveBlob) { // IE 10+
+					//alert('IE' + csv);
+					window.navigator.msSaveOrOpenBlob(new Blob([csv], {type: "text/plain;charset=utf-8;"}), "csvname.csv")
+				}
+				else {
+					$(this).attr({ 'download': filename, 'href': csvData, 'target': '_blank' });
+				}
+		}
+
+		// This must be a hyperlink
+		$("#export").on('click', function (event) {
+
+			exportTableToCSV.apply(this, [$('#projectSpreadsheet'), 'AreaUsageReport.csv']);
+
+			// IF CSV, don't do event.preventDefault() or return false
+			// We actually need this to be a typical hyperlink
+		});
+	});
 </script>
 <style>
 	.loader,
